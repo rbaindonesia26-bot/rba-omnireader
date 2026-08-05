@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="id" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RBA OmniReader Pro™ - Master PDF</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    
+    <!-- PDF.js library untuk merender file PDF secara akurat -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --text-main: #1e293b;
+            --accent-gold: #d97706;
+            --accent-blue: #0f172a;
+            --reader-bg: #cbd5e1;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+            background-size: 20px 20px;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 10px;
+        }
+
+        /* Container untuk Canvas PDF */
+        .reader-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin: 15px 0;
+            width: 100%;
+            height: calc(100vh - 140px);
+            background-color: var(--reader-bg);
+            border-radius: 12px;
+            box-shadow: inset 0 4px 6px -1px rgba(0, 0, 0, 0.1), inset 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+
+        /* Styling Kanvas yang akan merender teks dengan sempurna */
+        #pdf-canvas {
+            /* Disesuaikan agar sangat responsif mengikuti perhitungan JS terbaru */
+            max-width: 100%;
+            max-height: 100%;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            background-color: white;
+            transition: opacity 0.3s ease;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 12px 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 10px;
+        }
+
+        .btn-control {
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            padding: 8px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-control:hover:not(:disabled) {
+            background: #1e293b;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.3);
+        }
+
+        .btn-control:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Modal Daftar Isi */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.7);
+            z-index: 50;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(8px);
+        }
+
+        .modal.active { display: flex; }
+
+        .modal-content {
+            background: white;
+            width: 95%;
+            max-width: 600px;
+            height: 85vh;
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .toc-list {
+            overflow-y: auto;
+            flex: 1;
+            padding-right: 10px;
+        }
+
+        .toc-item {
+            padding: 12px 10px;
+            border-bottom: 1px solid #f1f5f9;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+            color: #334155;
+        }
+
+        .toc-item:hover {
+            background: #f8fafc;
+            color: var(--accent-gold);
+            padding-left: 15px;
+            border-left: 4px solid var(--accent-gold);
+        }
+
+        .toc-chapter {
+            font-weight: 700;
+            color: var(--accent-blue);
+            background: #f1f5f9;
+            border-radius: 6px;
+            margin-top: 12px;
+            font-family: 'Playfair Display', serif;
+        }
+
+        /* Loading Screen & Welcome UI */
+        #loading-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-color);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(15, 23, 42, 0.1);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border-left-color: var(--accent-gold);
+            border-top-color: var(--accent-blue);
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 8px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    </style>
+</head>
+<body>
+
+    <!-- Layar Awal (Welcome / Upload / Loading) -->
+    <div id="loading-screen">
+        <div id="loading-content" class="w-full max-w-lg px-6 flex flex-col items-center text-center">
+            <!-- Logo RBA Default Welcome -->
+            <a href="https://ibb.co.com/0VXNWm8v" target="_blank" class="mb-6 hover:scale-105 transition-transform duration-300">
+                <img src="https://i.ibb.co.com/tPhfNQkF/Chat-GPT-Image-Jul-31-2026-05-59-44-PM.png" alt="RBA Logo" class="w-32 h-32 object-cover rounded-2xl shadow-xl border-4 border-white">
+            </a>
+            <h1 class="text-4xl font-bold mb-1 text-slate-900" style="font-family: 'Playfair Display', serif;">RBA OmniReader Pro&trade;</h1>
+            <p class="text-sm font-bold text-amber-600 tracking-widest uppercase mb-4">Master PDF Generator</p>
+            <p class="text-slate-500 mb-6 leading-relaxed">Platform pembaca PDF universal interaktif. Unggah buku, dokumen, atau modul apa saja dan nikmati pengalaman membaca tingkat lanjut.</p>
+            
+            <label class="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white px-8 py-4 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-3 shadow-lg hover:shadow-2xl transform hover:-translate-y-1 w-full max-w-sm">
+                <i class="fas fa-file-upload text-2xl"></i> 
+                <span class="text-lg">Pilih File PDF</span>
+                <input type="file" accept=".pdf" class="hidden" id="welcome-file-upload">
+            </label>
+
+            <div class="mt-8 p-5 bg-white/60 backdrop-blur border border-slate-200 rounded-xl shadow-sm text-left w-full max-w-md">
+                <div class="flex items-center gap-3 mb-2">
+                    <i class="fas fa-shield-check text-amber-600 text-xl"></i>
+                    <h3 class="font-bold text-slate-800 text-sm uppercase tracking-wider">Hak Paten & Lisensi</h3>
+                </div>
+                <p class="text-xs text-slate-600 leading-relaxed border-l-2 border-amber-400 pl-3 mb-4">
+                    <strong>RBA (Rumah Bahasa Arab) OmniReader Pro&trade;</strong> merupakan karya dan hak milik intelektual yang dipatenkan oleh <strong>M. Nur Muslim</strong>. Alat ini diwakafkan dan <strong>diizinkan untuk disebarluaskan secara bebas (gratis)</strong> kepada siapa saja demi kemaslahatan umat dan pengembangan ilmu pengetahuan. Dilarang untuk diperjualbelikan.
+                </p>
+                <button onclick="downloadLicense()" class="w-full bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 px-4 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 shadow-sm">
+                    <i class="fas fa-file-signature text-lg"></i> Unduh Deklarasi Lisensi (TXT)
+                </button>
+            </div>
+        </div>
+        
+        <!-- Spinner Tersembunyi (Muncul saat proses render) -->
+        <div id="loading-spinner-wrapper" class="hidden flex-col items-center">
+            <div class="spinner mb-6"></div>
+            <p class="text-slate-700 font-semibold text-lg animate-pulse" id="loading-text">Sedang memproses dokumen...</p>
+        </div>
+    </div>
+
+    <!-- Antarmuka Utama Aplikasi -->
+    <div class="main-container">
+        <header class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm z-10 relative">
+            <div class="flex items-center gap-4">
+                <!-- Logo RBA Header -->
+                <a href="https://ibb.co.com/0VXNWm8v" target="_blank" title="RBA Logo">
+                    <img src="https://i.ibb.co.com/tPhfNQkF/Chat-GPT-Image-Jul-31-2026-05-59-44-PM.png" alt="RBA Logo" class="w-12 h-12 object-cover rounded-lg shadow-sm border border-slate-100">
+                </a>
+                <div class="overflow-hidden">
+                    <h1 id="app-title" class="text-lg sm:text-xl font-bold text-slate-800 truncate max-w-[200px] sm:max-w-md" style="font-family: 'Playfair Display', serif;">Belum ada dokumen</h1>
+                    <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider">RBA OmniReader Pro&trade;</p>
+                </div>
+            </div>
+            <div class="flex gap-2 shrink-0">
+                <label class="bg-slate-50 text-slate-700 hover:bg-slate-100 px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2 border border-slate-200 cursor-pointer" title="Ganti Dokumen PDF">
+                    <i class="fas fa-folder-open"></i>
+                    <span class="hidden md:inline">Ganti File</span>
+                    <input type="file" accept=".pdf" class="hidden" id="header-file-upload">
+                </label>
+                <button onclick="toggleModal(true)" class="bg-amber-50 text-amber-700 hover:bg-amber-100 px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2 border border-amber-200">
+                    <i class="fas fa-list-ul"></i>
+                    <span class="hidden md:inline">Daftar Isi</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="reader-wrapper" id="reader-container">
+            <canvas id="pdf-canvas"></canvas>
+        </div>
+
+        <div class="controls z-10 relative">
+            <button id="prev-btn" class="btn-control" onclick="goPrev()">
+                <i class="fas fa-chevron-left"></i> <span class="hidden sm:inline">Sebelumnya</span>
+            </button>
+            
+            <div class="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-lg font-semibold border border-slate-200 shadow-inner">
+                <span class="text-slate-600 hidden sm:inline">Halaman</span>
+                <input type="number" id="page-input" class="w-16 text-center border-2 border-slate-300 bg-white rounded-md p-1 text-slate-900 focus:outline-none focus:border-amber-500 transition-colors" value="1" min="1">
+                <span class="text-slate-600">/ <span id="total-pages">0</span></span>
+            </div>
+
+            <button id="next-btn" class="btn-control" onclick="goNext()">
+                <span class="hidden sm:inline">Selanjutnya</span> <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+
+        <div class="text-center pb-2 text-[10px] text-slate-400 font-medium tracking-wide">
+            &copy; 2026 RBA (Rumah Bahasa Arab) OmniReader Pro&trade; oleh M. Nur Muslim &bull; Hak Paten Dilindungi &bull; Diizinkan untuk disebarluaskan secara bebas.
+        </div>
+    </div>
+
+    <!-- Modal Daftar Isi Dinamis -->
+    <div class="modal" id="toc-modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4 border-b pb-4 border-slate-100">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-bookmark text-amber-600 text-2xl"></i>
+                    <h2 class="text-2xl font-bold text-slate-800" style="font-family: 'Playfair Display', serif;">Daftar Isi</h2>
+                </div>
+                <button onclick="toggleModal(false)" class="text-slate-400 hover:text-red-500 transition-colors text-xl bg-slate-50 hover:bg-red-50 rounded-full w-10 h-10 flex items-center justify-center">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="toc-container" class="toc-list">
+                <!-- TOC items akan diinjeksi via JS (Dinamis dari file PDF) -->
+                <div class="p-8 text-center text-slate-400">
+                    <i class="fas fa-file-pdf text-4xl mb-4 opacity-50 block"></i>
+                    Silakan unggah dokumen PDF terlebih dahulu.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Set up PDF.js worker path
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        // Core Application State
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pageIsRendering = false;
+        let pageNumPending = null;
+        
+        const canvas = document.getElementById('pdf-canvas');
+        const ctx = canvas.getContext('2d');
+        const pageInput = document.getElementById('page-input');
+        const totalPagesEl = document.getElementById('total-pages');
+        
+        const loadingScreen = document.getElementById('loading-screen');
+        const loadingContent = document.getElementById('loading-content');
+        const loadingSpinnerWrapper = document.getElementById('loading-spinner-wrapper');
+        const loadingText = document.getElementById('loading-text');
+
+        function renderPage(num) {
+            if (!pdfDoc) return; 
+            
+            pageIsRendering = true;
+            canvas.style.opacity = '0.4'; // Transisi halus
+
+            pdfDoc.getPage(num).then(function(page) {
+                // 1. Dapatkan ukuran kotak pembaca di layar
+                const container = document.getElementById('reader-container');
+                // Mengurangi sedikit margin (padding virtual) agar ada ruang lega di pinggir dokumen
+                const containerWidth = container.clientWidth - 20; 
+                const containerHeight = container.clientHeight - 20;
+
+                // 2. Dapatkan ukuran asli kertas PDF (Skala 1:1)
+                const unscaledViewport = page.getViewport({ scale: 1.0 });
+
+                // 3. Hitung rasio kecocokan agar PDF pas dengan layar (Fit to Page)
+                const scaleX = containerWidth / unscaledViewport.width;
+                const scaleY = containerHeight / unscaledViewport.height;
+                const fitScale = Math.min(scaleX, scaleY); // Ambil skala terkecil agar tidak ada yang terpotong
+
+                // 4. Tingkatkan resolusi internal (untuk ketajaman teks/High DPI)
+                const pixelRatio = window.devicePixelRatio || 1;
+                // Kita kalikan 1.5 agar teks tetap tajam saat di zoom/dibaca
+                const highResScale = fitScale * pixelRatio * 1.5;
+
+                const viewport = page.getViewport({ scale: highResScale });
+
+                // 5. Atur ukuran internal kanvas (Resolusi Tinggi)
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+
+                // 6. Atur ukuran tampilan visual kanvas (Mencegah pergeseran/terpotong)
+                canvas.style.width = `${viewport.width / pixelRatio / 1.5}px`;
+                canvas.style.height = `${viewport.height / pixelRatio / 1.5}px`;
+
+                const renderContext = {
+                    canvasContext: ctx,
+                    viewport: viewport
+                };
+
+                const renderTask = page.render(renderContext);
+
+                renderTask.promise.then(function() {
+                    pageIsRendering = false;
+                    canvas.style.opacity = '1';
+                    
+                    if (pageNumPending !== null) {
+                        renderPage(pageNumPending);
+                        pageNumPending = null;
+                    }
+                });
+            });
+
+            // Update UI Navigasi Halaman
+            pageInput.value = num;
+            document.getElementById('prev-btn').disabled = num <= 1;
+            document.getElementById('next-btn').disabled = num >= pdfDoc.numPages;
+        }
+
+        function queueRenderPage(num) {
+            if (!pdfDoc) return;
+            if (pageIsRendering) {
+                pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
+            pageNum = num;
+        }
+
+        function goPrev() {
+            if (!pdfDoc || pageNum <= 1) return;
+            pageNum--;
+            queueRenderPage(pageNum);
+        }
+
+        function goNext() {
+            if (!pdfDoc || pageNum >= pdfDoc.numPages) return;
+            pageNum++;
+            queueRenderPage(pageNum);
+        }
+
+        async function buildDynamicTOC() {
+            const container = document.getElementById('toc-container');
+            container.innerHTML = '<div class="text-center p-8 text-slate-500 animate-pulse"><i class="fas fa-search mb-2 text-2xl block"></i> Memindai struktur daftar isi otomatis...</div>';
+
+            try {
+                // Mengambil metadata "Outline/Bookmark" langsung dari PDF
+                const outline = await pdfDoc.getOutline();
+                container.innerHTML = ''; 
+
+                if (!outline || outline.length === 0) {
+                    container.innerHTML = `
+                        <div class="p-8 text-center text-slate-500">
+                            <i class="fas fa-info-circle text-4xl mb-4 opacity-50 block"></i>
+                            <p class="font-semibold text-lg text-slate-700">Tidak Ada Metadata Daftar Isi</p>
+                            <p class="text-sm mt-2">Buku PDF ini tidak menyimpan data struktur bab (Outline). Silakan gunakan navigasi manual di bawah.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Fungsi Rekursif untuk membangun hierarki Daftar Isi
+                const renderOutlineItem = async (item, level = 0) => {
+                    const div = document.createElement('div');
+                    const isChapter = level === 0;
+                    div.className = `toc-item ${isChapter ? 'toc-chapter' : ''}`;
+                    // Indentasi untuk sub-bab
+                    if (!isChapter) {
+                        div.style.marginLeft = `${level * 15}px`;
+                        div.style.borderLeft = "2px solid #e2e8f0";
+                    }
+
+                    div.innerHTML = `<span class="truncate pr-2">${item.title}</span> <i class="fas fa-angle-right text-xs opacity-50"></i>`;
+
+                    div.onclick = async () => {
+                        toggleModal(false); // Tutup modal saat diklik
+                        
+                        // Menangani Destinasi Halaman dari PDF.js dengan lebih akurat
+                        let dest = item.dest;
+                        if (typeof dest === 'string') {
+                            dest = await pdfDoc.getDestination(dest);
+                        }
+                        
+                        if (Array.isArray(dest)) {
+                            const ref = dest[0];
+                            try {
+                                let pageIndex;
+                                // Pengecekan Presisi: Menangani berbagai format referensi halaman PDF
+                                if (typeof ref === 'object' && ref !== null) {
+                                    // Format standar: referensi berupa objek
+                                    pageIndex = await pdfDoc.getPageIndex(ref);
+                                } else if (Number.isInteger(ref)) {
+                                    // Format alternatif: referensi langsung berupa angka urutan halaman
+                                    pageIndex = ref;
+                                } else {
+                                    console.warn("Format referensi halaman tidak dikenali.");
+                                    return;
+                                }
+                                
+                                queueRenderPage(pageIndex + 1); // PDF.js page index dimulai dari 0
+                            } catch (e) {
+                                console.warn("Tidak dapat melompat ke halaman tersebut", e);
+                            }
+                        }
+                    };
+                    
+                    container.appendChild(div);
+
+                    // Render anak sub-bab jika ada
+                    if (item.items && item.items.length > 0) {
+                        for (let subItem of item.items) {
+                            await renderOutlineItem(subItem, level + 1);
+                        }
+                    }
+                };
+
+                for (let item of outline) {
+                    await renderOutlineItem(item);
+                }
+
+            } catch (e) {
+                console.error("Kesalahan memuat Outline PDF", e);
+                container.innerHTML = '<div class="p-4 text-center text-red-500 font-semibold"><i class="fas fa-exclamation-triangle"></i> Gagal mengekstrak daftar isi.</div>';
+            }
+        }
+
+        function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if(!file || file.type !== 'application/pdf') {
+                alert('Harap pilih dokumen berformat PDF.');
+                return;
+            }
+
+            // Ubah UI menjadi Loading State
+            loadingContent.classList.add('hidden');
+            loadingSpinnerWrapper.classList.remove('hidden');
+            loadingSpinnerWrapper.classList.add('flex');
+            loadingScreen.style.display = 'flex';
+            loadingText.innerText = `Memproses "${file.name}"...`;
+            
+            // Mengubah Judul Aplikasi
+            document.getElementById('app-title').innerText = file.name.replace('.pdf', '');
+
+            const fileReader = new FileReader();
+            fileReader.onload = function() {
+                const typedarray = new Uint8Array(this.result);
+                
+                const loadingTask = pdfjsLib.getDocument({ data: typedarray });
+                loadingTask.promise.then(pdf => {
+                    pdfDoc = pdf;
+                    totalPagesEl.textContent = pdfDoc.numPages;
+                    pageInput.max = pdfDoc.numPages;
+                    pageNum = 1;
+                    
+                    // Bangun Daftar Isi & Render Halaman 1
+                    buildDynamicTOC();
+                    queueRenderPage(pageNum);
+                    
+                    // Sembunyikan layar loading setelah selesai
+                    setTimeout(() => { loadingScreen.style.display = 'none'; }, 500);
+                }).catch(err => {
+                    console.error("Kesalahan Render PDF:", err);
+                    loadingSpinnerWrapper.innerHTML = `
+                        <div class="text-red-600 bg-red-50 p-6 rounded-xl border border-red-200 mt-4 max-w-sm text-center">
+                            <i class="fas fa-times-circle text-4xl mb-3"></i>
+                            <h4 class="font-bold text-lg mb-2">Gagal Memproses File</h4>
+                            <p class="text-sm mb-4">File PDF mungkin rusak atau diproteksi kata sandi (encrypted).</p>
+                            <button onclick="location.reload()" class="bg-slate-800 text-white px-6 py-2 rounded-lg font-bold w-full transition hover:bg-slate-900">Kembali</button>
+                        </div>
+                    `;
+                });
+            };
+            fileReader.readAsArrayBuffer(file);
+        }
+
+        // Tautkan fungsi unggah ke kedua tombol input file
+        document.getElementById('welcome-file-upload').addEventListener('change', handleFileUpload);
+        document.getElementById('header-file-upload').addEventListener('change', handleFileUpload);
+
+        pageInput.addEventListener('change', (e) => {
+            if (!pdfDoc) {
+                e.target.value = 1;
+                return;
+            }
+            let val = parseInt(e.target.value);
+            if(val > 0 && val <= pdfDoc.numPages) {
+                queueRenderPage(val);
+            } else {
+                e.target.value = pageNum;
+            }
+        });
+
+        function toggleModal(show) {
+            const modal = document.getElementById('toc-modal');
+            if (show) modal.classList.add('active');
+            else modal.classList.remove('active');
+        }
+
+        // Tutup modal jika area luar diklik
+        document.getElementById('toc-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('toc-modal')) toggleModal(false);
+        });
+
+        // Kontrol Keyboard (Kiri/Kanan)
+        document.addEventListener('keydown', (e) => {
+            if (!pdfDoc) return; 
+            if (document.getElementById('toc-modal').classList.contains('active')) return;
+            if (e.key === 'ArrowRight') goNext(); 
+            else if (e.key === 'ArrowLeft') goPrev();
+        });
+
+        // Kontrol Layar Sentuh (Swipe Kiri/Kanan)
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const readerContainer = document.getElementById('reader-container');
+
+        readerContainer.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, {passive: true});
+
+        readerContainer.addEventListener('touchend', e => {
+            if (!pdfDoc) return; 
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, {passive: true});
+
+        function handleSwipe() {
+            if (!pdfDoc) return;
+            const threshold = 60;
+            // Mode LTR (Kiri ke Kanan): Geser kiri = Next, Geser kanan = Prev
+            if (touchStartX - touchEndX > threshold) goNext(); 
+            else if (touchEndX - touchStartX > threshold) goPrev(); 
+        }
+
+        function downloadLicense() {
+            const licenseText = `=============================================================
+         DEKLARASI LISENSI DISTRIBUSI TERBUKA & WAKAF
+               RBA OmniReader Pro™ - Master PDF
+=============================================================
+
+Dengan ini dideklarasikan secara resmi bahwa perangkat lunak:
+Nama Alat : RBA (Rumah Bahasa Arab) OmniReader Pro™
+Fungsi    : Master PDF Generator & Universal Reader
+Pemilik   : M. Nur Muslim (Hak Paten Dilindungi)
+
+1. STATUS KEPEMILIKAN & WAKAF
+Perangkat lunak ini merupakan hak cipta dan karya intelektual 
+dari M. Nur Muslim. Mulai tanggal peluncurannya, alat ini resmi 
+DIWAKAFKAN untuk kemaslahatan umat, pendidikan, dan 
+pengembangan ilmu pengetahuan.
+
+2. HAK DISTRIBUSI TERBUKA (OPEN DISTRIBUTION)
+Kami memberikan hak dan izin penuh kepada siapa pun (individu, 
+komunitas, maupun lembaga/institusi) untuk:
+  a. Menggunakan aplikasi ini tanpa batas waktu.
+  b. Menyebarluaskan, menyalin, dan membagikan aplikasi ini 
+     secara BEBAS dan GRATIS kepada siapa saja.
+
+3. LARANGAN KERAS (RESTRICTIONS)
+Demi menjaga niat tulus dari pewakafan ini, SANGAT DILARANG 
+KERAS untuk:
+  a. Memperjualbelikan aplikasi ini dalam bentuk dan dalih apapun.
+  b. Menjadikan aplikasi ini sebagai alat komersial untuk mencari 
+     keuntungan finansial sepihak.
+  c. Menghapus nama pengembang (M. Nur Muslim) atau mengklaim
+     hak cipta atas logo/sistem milik RBA OmniReader Pro™.
+
+Semoga alat ini membawa keberkahan, manfaat, dan kemudahan 
+bagi para pencari ilmu di mana pun berada.
+
+Dideklarasikan pada: Agustus 2026
+Untuk kemaslahatan bersama.
+
+Hormat kami,
+
+
+M. Nur Muslim
+RBA - Rumah Bahasa Arab (Pemegang Paten & Pengembang)`;
+
+            // Membuat Blob Text dan memicu pengunduhan file
+            const blob = new Blob([licenseText], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Deklarasi_Lisensi_Wakaf_RBA_OmniReader_Pro.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
