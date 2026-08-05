@@ -2,15 +2,19 @@
 <html lang="id" dir="ltr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Meta viewport sangat penting untuk layar HP (Mobile Responsive) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>RBA OmniReader Pro™ - Master PDF</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     
-    <!-- PDF.js library untuk merender file PDF secara akurat -->
+    <!-- PDF.js library untuk merender file PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    
+    <!-- PDF-Lib library untuk menyatukan coretan & mengunduh PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 
     <style>
         :root {
@@ -30,7 +34,10 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            height: 100vh;
+            margin: 0;
+            /* Perbaikan Layar HP: Gunakan 100dvh agar tidak tertutup address bar browser mobile */
+            height: 100vh; /* Fallback untuk browser lama */
+            height: 100dvh; 
         }
 
         .main-container {
@@ -41,27 +48,30 @@
             margin: 0 auto;
             width: 100%;
             padding: 10px;
+            /* Pastikan padding tidak menambah tinggi elemen melampaui layar */
+            box-sizing: border-box; 
+            padding-bottom: env(safe-area-inset-bottom, 10px);
         }
 
-        /* Container untuk Canvas PDF */
         .reader-wrapper {
+            /* Perbaikan Tata Letak: Biarkan flexbox yang menghitung ruang tersisa, bukan dengan calc() manual */
             flex: 1;
+            min-height: 0; /* CRITICAL: Mengizinkan anak flex untuk menyusut pada layar kecil */
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
-            margin: 15px 0;
+            margin: 10px 0;
             width: 100%;
-            height: calc(100vh - 140px);
             background-color: var(--reader-bg);
             border-radius: 12px;
             box-shadow: inset 0 4px 6px -1px rgba(0, 0, 0, 0.1), inset 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             overflow: hidden;
         }
 
-        /* Styling Kanvas yang akan merender teks dengan sempurna */
-        #pdf-canvas {
-            /* Disesuaikan agar sangat responsif mengikuti perhitungan JS terbaru */
+        /* Container Pembungkus Kanvas PDF dan Kanvas Coretan */
+        #canvas-wrapper {
+            position: relative;
             max-width: 100%;
             max-height: 100%;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
@@ -69,22 +79,29 @@
             transition: opacity 0.3s ease;
         }
 
+        #pdf-canvas, #drawing-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
         .controls {
             display: flex;
             justify-content: space-between;
             align-items: center;
             background: white;
-            padding: 12px 20px;
+            padding: 10px 15px;
             border-radius: 15px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            margin-bottom: 10px;
+            margin-bottom: 5px;
+            flex-shrink: 0; /* Mencegah elemen menyusut saat layar sempit */
         }
 
         .btn-control {
             background: var(--accent-blue);
             color: white;
             border: none;
-            padding: 8px 24px;
+            padding: 8px 16px;
             border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
@@ -92,6 +109,10 @@
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+
+        @media (min-width: 640px) {
+            .btn-control { padding: 8px 24px; }
         }
 
         .btn-control:hover:not(:disabled) {
@@ -105,6 +126,32 @@
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
+        }
+
+        /* Toolbar Edit (Anotasi) */
+        .edit-toolbar {
+            flex-shrink: 0; /* Mencegah elemen menyusut saat layar sempit */
+        }
+        
+        .btn-tool {
+            background: white;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-tool:hover { background: #f1f5f9; }
+        .btn-tool.active-tool {
+            background: #e2e8f0;
+            border-color: #94a3b8;
+            color: #0f172a;
         }
 
         /* Modal Daftar Isi */
@@ -127,7 +174,7 @@
             max-width: 600px;
             height: 85vh;
             border-radius: 16px;
-            padding: 24px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
@@ -147,8 +194,12 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             color: #334155;
+        }
+
+        @media (min-width: 640px) {
+            .toc-item { font-size: 0.95rem; }
         }
 
         .toc-item:hover {
@@ -167,7 +218,6 @@
             font-family: 'Playfair Display', serif;
         }
 
-        /* Loading Screen & Welcome UI */
         #loading-screen {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -177,6 +227,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            overflow-y: auto; /* Jika layar sangat kecil, biarkan welcome screen bisa di-scroll */
         }
         
         .spinner {
@@ -190,7 +241,6 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
         ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 8px; }
@@ -201,61 +251,57 @@
 
     <!-- Layar Awal (Welcome / Upload / Loading) -->
     <div id="loading-screen">
-        <div id="loading-content" class="w-full max-w-lg px-6 flex flex-col items-center text-center">
-            <!-- Logo RBA Default Welcome -->
-            <a href="https://ibb.co.com/0VXNWm8v" target="_blank" class="mb-6 hover:scale-105 transition-transform duration-300">
-                <img src="https://i.ibb.co.com/tPhfNQkF/Chat-GPT-Image-Jul-31-2026-05-59-44-PM.png" alt="RBA Logo" class="w-32 h-32 object-cover rounded-2xl shadow-xl border-4 border-white">
+        <div id="loading-content" class="w-full max-w-lg px-4 py-8 flex flex-col items-center text-center">
+            <a href="https://ibb.co.com/0VXNWm8v" target="_blank" class="mb-4 sm:mb-6 hover:scale-105 transition-transform duration-300 shrink-0">
+                <img src="https://i.ibb.co.com/tPhfNQkF/Chat-GPT-Image-Jul-31-2026-05-59-44-PM.png" alt="RBA Logo" class="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-2xl shadow-xl border-4 border-white">
             </a>
-            <h1 class="text-4xl font-bold mb-1 text-slate-900" style="font-family: 'Playfair Display', serif;">RBA OmniReader Pro&trade;</h1>
-            <p class="text-sm font-bold text-amber-600 tracking-widest uppercase mb-4">Master PDF Generator</p>
-            <p class="text-slate-500 mb-6 leading-relaxed">Platform pembaca PDF universal interaktif. Unggah buku, dokumen, atau modul apa saja dan nikmati pengalaman membaca tingkat lanjut.</p>
+            <h1 class="text-3xl sm:text-4xl font-bold mb-1 text-slate-900" style="font-family: 'Playfair Display', serif;">RBA OmniReader Pro&trade;</h1>
+            <p class="text-xs sm:text-sm font-bold text-amber-600 tracking-widest uppercase mb-3 sm:mb-4">Master PDF Generator</p>
+            <p class="text-sm sm:text-base text-slate-500 mb-6 leading-relaxed">Platform pembaca PDF interaktif. Unggah dokumen apa saja, tambahkan coretan, dan nikmati pengalaman membaca tingkat lanjut.</p>
             
-            <label class="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white px-8 py-4 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-3 shadow-lg hover:shadow-2xl transform hover:-translate-y-1 w-full max-w-sm">
-                <i class="fas fa-file-upload text-2xl"></i> 
-                <span class="text-lg">Pilih File PDF</span>
+            <label class="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-3 shadow-lg hover:shadow-2xl transform hover:-translate-y-1 w-full max-w-sm">
+                <i class="fas fa-file-upload text-xl sm:text-2xl"></i> 
+                <span class="text-base sm:text-lg">Buka File PDF</span>
                 <input type="file" accept=".pdf" class="hidden" id="welcome-file-upload">
             </label>
 
-            <div class="mt-8 p-5 bg-white/60 backdrop-blur border border-slate-200 rounded-xl shadow-sm text-left w-full max-w-md">
-                <div class="flex items-center gap-3 mb-2">
-                    <i class="fas fa-shield-check text-amber-600 text-xl"></i>
-                    <h3 class="font-bold text-slate-800 text-sm uppercase tracking-wider">Hak Paten & Lisensi</h3>
+            <div class="mt-6 sm:mt-8 p-4 sm:p-5 bg-white/60 backdrop-blur border border-slate-200 rounded-xl shadow-sm text-left w-full max-w-md">
+                <div class="flex items-center gap-2 sm:gap-3 mb-2">
+                    <i class="fas fa-shield-check text-amber-600 text-lg sm:text-xl"></i>
+                    <h3 class="font-bold text-slate-800 text-xs sm:text-sm uppercase tracking-wider">Hak Paten & Lisensi</h3>
                 </div>
-                <p class="text-xs text-slate-600 leading-relaxed border-l-2 border-amber-400 pl-3 mb-4">
-                    <strong>RBA (Rumah Bahasa Arab) OmniReader Pro&trade;</strong> merupakan karya dan hak milik intelektual yang dipatenkan oleh <strong>M. Nur Muslim</strong>. Alat ini diwakafkan dan <strong>diizinkan untuk disebarluaskan secara bebas (gratis)</strong> kepada siapa saja demi kemaslahatan umat dan pengembangan ilmu pengetahuan. Dilarang untuk diperjualbelikan.
+                <p class="text-[11px] sm:text-xs text-slate-600 leading-relaxed border-l-2 border-amber-400 pl-3 mb-3 sm:mb-4">
+                    <strong>RBA (Rumah Bahasa Arab) OmniReader Pro&trade;</strong> merupakan karya dan hak cipta <strong>M. Nur Muslim</strong>. Alat ini diwakafkan dan <strong>diizinkan untuk disebarluaskan secara bebas (gratis)</strong> kepada siapa saja demi kemaslahatan umat. Dilarang diperjualbelikan.
                 </p>
-                <button onclick="downloadLicense()" class="w-full bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 px-4 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 shadow-sm">
-                    <i class="fas fa-file-signature text-lg"></i> Unduh Deklarasi Lisensi (TXT)
+                <button onclick="downloadLicense()" class="w-full bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 shadow-sm">
+                    <i class="fas fa-file-signature text-base sm:text-lg"></i> Unduh Deklarasi Lisensi
                 </button>
             </div>
         </div>
         
-        <!-- Spinner Tersembunyi (Muncul saat proses render) -->
-        <div id="loading-spinner-wrapper" class="hidden flex-col items-center">
+        <div id="loading-spinner-wrapper" class="hidden flex-col items-center justify-center h-full">
             <div class="spinner mb-6"></div>
-            <p class="text-slate-700 font-semibold text-lg animate-pulse" id="loading-text">Sedang memproses dokumen...</p>
+            <p class="text-slate-700 font-semibold text-base sm:text-lg animate-pulse" id="loading-text">Sedang memproses dokumen...</p>
         </div>
     </div>
 
     <!-- Antarmuka Utama Aplikasi -->
     <div class="main-container">
-        <header class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm z-10 relative">
-            <div class="flex items-center gap-4">
-                <!-- Logo RBA Header -->
-                <a href="https://ibb.co.com/0VXNWm8v" target="_blank" title="RBA Logo">
-                    <img src="https://i.ibb.co.com/tPhfNQkF/Chat-GPT-Image-Jul-31-2026-05-59-44-PM.png" alt="RBA Logo" class="w-12 h-12 object-cover rounded-lg shadow-sm border border-slate-100">
+        <header class="flex justify-between items-center bg-white p-3 sm:p-4 rounded-xl shadow-sm z-10 relative shrink-0">
+            <div class="flex items-center gap-3 sm:gap-4 overflow-hidden">
+                <a href="https://ibb.co.com/0VXNWm8v" target="_blank" title="RBA Logo" class="shrink-0">
+                    <img src="https://i.ibb.co.com/tPhfNQkF/Chat-GPT-Image-Jul-31-2026-05-59-44-PM.png" alt="RBA Logo" class="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg shadow-sm border border-slate-100">
                 </a>
                 <div class="overflow-hidden">
-                    <h1 id="app-title" class="text-lg sm:text-xl font-bold text-slate-800 truncate max-w-[200px] sm:max-w-md" style="font-family: 'Playfair Display', serif;">Belum ada dokumen</h1>
-                    <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider">RBA OmniReader Pro&trade;</p>
+                    <h1 id="app-title" class="text-base sm:text-xl font-bold text-slate-800 truncate max-w-[150px] sm:max-w-md" style="font-family: 'Playfair Display', serif;">Belum ada dokumen</h1>
+                    <p class="text-[10px] sm:text-xs text-slate-500 font-semibold uppercase tracking-wider">RBA OmniReader Pro&trade;</p>
                 </div>
             </div>
             <div class="flex gap-2 shrink-0">
-                <label class="bg-slate-50 text-slate-700 hover:bg-slate-100 px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2 border border-slate-200 cursor-pointer" title="Ganti Dokumen PDF">
-                    <i class="fas fa-folder-open"></i>
-                    <span class="hidden md:inline">Ganti File</span>
-                    <input type="file" accept=".pdf" class="hidden" id="header-file-upload">
-                </label>
+                <button onclick="toggleEditMode()" class="bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2 border border-blue-200" id="btn-edit-mode" title="Mode Coret/Anotasi">
+                    <i class="fas fa-pen-nib"></i>
+                    <span class="hidden md:inline">Anotasi</span>
+                </button>
                 <button onclick="toggleModal(true)" class="bg-amber-50 text-amber-700 hover:bg-amber-100 px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2 border border-amber-200">
                     <i class="fas fa-list-ul"></i>
                     <span class="hidden md:inline">Daftar Isi</span>
@@ -263,8 +309,12 @@
             </div>
         </header>
 
+        <!-- Area Pembaca & Kanvas Coretan -->
         <div class="reader-wrapper" id="reader-container">
-            <canvas id="pdf-canvas"></canvas>
+            <div id="canvas-wrapper">
+                <canvas id="pdf-canvas"></canvas>
+                <canvas id="drawing-canvas" class="absolute top-0 left-0" style="pointer-events: none; touch-action: none;"></canvas>
+            </div>
         </div>
 
         <div class="controls z-10 relative">
@@ -272,9 +322,9 @@
                 <i class="fas fa-chevron-left"></i> <span class="hidden sm:inline">Sebelumnya</span>
             </button>
             
-            <div class="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-lg font-semibold border border-slate-200 shadow-inner">
-                <span class="text-slate-600 hidden sm:inline">Halaman</span>
-                <input type="number" id="page-input" class="w-16 text-center border-2 border-slate-300 bg-white rounded-md p-1 text-slate-900 focus:outline-none focus:border-amber-500 transition-colors" value="1" min="1">
+            <div class="flex items-center gap-2 sm:gap-3 bg-slate-50 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-semibold border border-slate-200 shadow-inner text-sm sm:text-base">
+                <span class="text-slate-600 hidden sm:inline">Hal</span>
+                <input type="number" id="page-input" class="w-12 sm:w-16 text-center border-2 border-slate-300 bg-white rounded-md p-1 text-slate-900 focus:outline-none focus:border-amber-500 transition-colors" value="1" min="1">
                 <span class="text-slate-600">/ <span id="total-pages">0</span></span>
             </div>
 
@@ -283,27 +333,38 @@
             </button>
         </div>
 
-        <div class="text-center pb-2 text-[10px] text-slate-400 font-medium tracking-wide">
-            &copy; 2026 RBA (Rumah Bahasa Arab) OmniReader Pro&trade; oleh M. Nur Muslim &bull; Hak Paten Dilindungi &bull; Diizinkan untuk disebarluaskan secara bebas.
+        <!-- Toolbar Edit (Tersembunyi secara default) -->
+        <div class="edit-toolbar z-10 relative flex justify-center flex-wrap gap-2 mt-1 mb-1 hidden" id="edit-toolbar">
+            <button onclick="setTool('pen')" class="btn-tool active-tool" id="tool-pen"><i class="fas fa-pen text-red-500"></i> Pena</button>
+            <button onclick="setTool('highlight')" class="btn-tool" id="tool-highlight"><i class="fas fa-highlighter text-yellow-500"></i> Stabilo</button>
+            <button onclick="setTool('whiteout')" class="btn-tool" id="tool-whiteout"><i class="fas fa-paint-roller text-slate-400"></i> Tipe-X</button>
+            <button onclick="setTool('text')" class="btn-tool" id="tool-text"><i class="fas fa-font text-blue-600"></i> Teks</button>
+            <button onclick="setTool('eraser')" class="btn-tool" id="tool-eraser" title="Hapus Coretan/Tipe-X/Teks"><i class="fas fa-eraser"></i> Hapus</button>
+            <div class="w-px h-6 sm:h-8 bg-slate-300 mx-1"></div>
+            <button onclick="clearCanvas()" class="btn-tool hover:text-red-600"><i class="fas fa-trash"></i> Bersihkan</button>
+            <button onclick="exportEditedPdf()" class="btn-tool bg-amber-600 text-white font-bold border-amber-700 hover:bg-amber-700 shadow-md"><i class="fas fa-file-export"></i> Simpan PDF</button>
+        </div>
+
+        <div class="text-center mt-1 pb-1 text-[9px] sm:text-[10px] text-slate-400 font-medium tracking-wide shrink-0">
+            &copy; 2026 RBA (Rumah Bahasa Arab) OmniReader Pro&trade; oleh M. Nur Muslim
         </div>
     </div>
 
     <!-- Modal Daftar Isi Dinamis -->
     <div class="modal" id="toc-modal">
         <div class="modal-content">
-            <div class="flex justify-between items-center mb-4 border-b pb-4 border-slate-100">
+            <div class="flex justify-between items-center mb-4 border-b pb-4 border-slate-100 shrink-0">
                 <div class="flex items-center gap-3">
-                    <i class="fas fa-bookmark text-amber-600 text-2xl"></i>
-                    <h2 class="text-2xl font-bold text-slate-800" style="font-family: 'Playfair Display', serif;">Daftar Isi</h2>
+                    <i class="fas fa-bookmark text-amber-600 text-xl sm:text-2xl"></i>
+                    <h2 class="text-xl sm:text-2xl font-bold text-slate-800" style="font-family: 'Playfair Display', serif;">Daftar Isi</h2>
                 </div>
-                <button onclick="toggleModal(false)" class="text-slate-400 hover:text-red-500 transition-colors text-xl bg-slate-50 hover:bg-red-50 rounded-full w-10 h-10 flex items-center justify-center">
+                <button onclick="toggleModal(false)" class="text-slate-400 hover:text-red-500 transition-colors text-lg sm:text-xl bg-slate-50 hover:bg-red-50 rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div id="toc-container" class="toc-list">
-                <!-- TOC items akan diinjeksi via JS (Dinamis dari file PDF) -->
                 <div class="p-8 text-center text-slate-400">
-                    <i class="fas fa-file-pdf text-4xl mb-4 opacity-50 block"></i>
+                    <i class="fas fa-file-pdf text-3xl sm:text-4xl mb-4 opacity-50 block"></i>
                     Silakan unggah dokumen PDF terlebih dahulu.
                 </div>
             </div>
@@ -311,17 +372,18 @@
     </div>
 
     <script>
-        // Set up PDF.js worker path
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-        // Core Application State
+        // State Aplikasi
         let pdfDoc = null;
+        let originalPdfBytes = null; 
         let pageNum = 1;
         let pageIsRendering = false;
         let pageNumPending = null;
         
         const canvas = document.getElementById('pdf-canvas');
         const ctx = canvas.getContext('2d');
+        const canvasWrapper = document.getElementById('canvas-wrapper');
         const pageInput = document.getElementById('page-input');
         const totalPagesEl = document.getElementById('total-pages');
         
@@ -330,53 +392,73 @@
         const loadingSpinnerWrapper = document.getElementById('loading-spinner-wrapper');
         const loadingText = document.getElementById('loading-text');
 
+        // State Anotasi (Drawing)
+        const drawCanvas = document.getElementById('drawing-canvas');
+        const drawCtx = drawCanvas.getContext('2d');
+        let isDrawingMode = false;
+        let isDrawing = false;
+        let isCanvasDirty = false;
+        let currentTool = 'pen';
+        let pageDrawings = {}; 
+
+        // --- SISTEM RENDER PDF FIT-TO-SCREEN ---
         function renderPage(num) {
             if (!pdfDoc) return; 
             
             pageIsRendering = true;
-            canvas.style.opacity = '0.4'; // Transisi halus
+            canvasWrapper.style.opacity = '0.4';
 
             pdfDoc.getPage(num).then(function(page) {
-                // 1. Dapatkan ukuran kotak pembaca di layar
                 const container = document.getElementById('reader-container');
-                // Mengurangi sedikit margin (padding virtual) agar ada ruang lega di pinggir dokumen
+                // Mengurangi padding internal container (10px tiap sisi)
                 const containerWidth = container.clientWidth - 20; 
                 const containerHeight = container.clientHeight - 20;
 
-                // 2. Dapatkan ukuran asli kertas PDF (Skala 1:1)
                 const unscaledViewport = page.getViewport({ scale: 1.0 });
 
-                // 3. Hitung rasio kecocokan agar PDF pas dengan layar (Fit to Page)
+                // Fit to Screen Logic: Menyesuaikan agar pas di layar mana pun
                 const scaleX = containerWidth / unscaledViewport.width;
                 const scaleY = containerHeight / unscaledViewport.height;
-                const fitScale = Math.min(scaleX, scaleY); // Ambil skala terkecil agar tidak ada yang terpotong
+                const fitScale = Math.min(scaleX, scaleY); 
 
-                // 4. Tingkatkan resolusi internal (untuk ketajaman teks/High DPI)
+                // Optimasi resolusi tinggi untuk layar tajam (Retina/Mobile)
                 const pixelRatio = window.devicePixelRatio || 1;
-                // Kita kalikan 1.5 agar teks tetap tajam saat di zoom/dibaca
                 const highResScale = fitScale * pixelRatio * 1.5;
 
                 const viewport = page.getViewport({ scale: highResScale });
 
-                // 5. Atur ukuran internal kanvas (Resolusi Tinggi)
                 canvas.width = viewport.width;
                 canvas.height = viewport.height;
 
-                // 6. Atur ukuran tampilan visual kanvas (Mencegah pergeseran/terpotong)
-                canvas.style.width = `${viewport.width / pixelRatio / 1.5}px`;
-                canvas.style.height = `${viewport.height / pixelRatio / 1.5}px`;
+                // Tampilan CSS akhir (mengembalikan ke ukuran visual agar tajam)
+                const displayWidth = `${viewport.width / pixelRatio / 1.5}px`;
+                const displayHeight = `${viewport.height / pixelRatio / 1.5}px`;
+                
+                canvas.style.width = displayWidth;
+                canvas.style.height = displayHeight;
+                canvasWrapper.style.width = displayWidth;
+                canvasWrapper.style.height = displayHeight;
 
-                const renderContext = {
-                    canvasContext: ctx,
-                    viewport: viewport
-                };
-
+                const renderContext = { canvasContext: ctx, viewport: viewport };
                 const renderTask = page.render(renderContext);
 
                 renderTask.promise.then(function() {
                     pageIsRendering = false;
-                    canvas.style.opacity = '1';
+                    canvasWrapper.style.opacity = '1';
                     
+                    // Sinkronisasi Kanvas Coretan dengan Kanvas PDF
+                    drawCanvas.width = canvas.width;
+                    drawCanvas.height = canvas.height;
+                    
+                    // Mengembalikan coretan yang tersimpan di halaman ini
+                    drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+                    if (pageDrawings[num]) {
+                        const img = new Image();
+                        img.onload = () => { drawCtx.drawImage(img, 0, 0); };
+                        img.src = pageDrawings[num];
+                    }
+                    isCanvasDirty = false;
+
                     if (pageNumPending !== null) {
                         renderPage(pageNumPending);
                         pageNumPending = null;
@@ -384,60 +466,73 @@
                 });
             });
 
-            // Update UI Navigasi Halaman
             pageInput.value = num;
             document.getElementById('prev-btn').disabled = num <= 1;
             document.getElementById('next-btn').disabled = num >= pdfDoc.numPages;
         }
 
+        // --- Auto-Resize Event ---
+        // Menggambar ulang PDF secara otomatis jika orientasi HP diubah atau layar ditarik
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            if (!pdfDoc) return;
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                // Hindari menggambar ulang saat sedang mode coret untuk mencegah kehilangan coretan yang belum disave internal
+                if (!isDrawingMode) {
+                    renderPage(pageNum);
+                }
+            }, 250);
+        });
+
+        // --- SISTEM PERGANTIAN HALAMAN AMAN ---
         function queueRenderPage(num) {
             if (!pdfDoc) return;
-            if (pageIsRendering) {
-                pageNumPending = num;
-            } else {
-                renderPage(num);
-            }
-            pageNum = num;
+            if (pageIsRendering) { pageNumPending = num; } 
+            else { renderPage(num); }
         }
 
-        function goPrev() {
-            if (!pdfDoc || pageNum <= 1) return;
-            pageNum--;
+        function changePage(newNum) {
+            if (!pdfDoc || newNum === pageNum || newNum < 1 || newNum > pdfDoc.numPages) return;
+            saveCurrentDrawing(); 
+            pageNum = newNum;
             queueRenderPage(pageNum);
         }
 
-        function goNext() {
-            if (!pdfDoc || pageNum >= pdfDoc.numPages) return;
-            pageNum++;
-            queueRenderPage(pageNum);
-        }
+        function goPrev() { if(pdfDoc) changePage(pageNum - 1); }
+        function goNext() { if(pdfDoc) changePage(pageNum + 1); }
 
+        pageInput.addEventListener('change', (e) => {
+            if (!pdfDoc) { e.target.value = 1; return; }
+            let val = parseInt(e.target.value);
+            if(val > 0 && val <= pdfDoc.numPages) { changePage(val); } 
+            else { e.target.value = pageNum; }
+        });
+
+        // --- SISTEM DAFTAR ISI ---
         async function buildDynamicTOC() {
             const container = document.getElementById('toc-container');
-            container.innerHTML = '<div class="text-center p-8 text-slate-500 animate-pulse"><i class="fas fa-search mb-2 text-2xl block"></i> Memindai struktur daftar isi otomatis...</div>';
+            container.innerHTML = '<div class="text-center p-8 text-slate-500 animate-pulse"><i class="fas fa-search mb-2 text-2xl block"></i> Memindai daftar isi otomatis...</div>';
 
             try {
-                // Mengambil metadata "Outline/Bookmark" langsung dari PDF
                 const outline = await pdfDoc.getOutline();
                 container.innerHTML = ''; 
 
                 if (!outline || outline.length === 0) {
                     container.innerHTML = `
                         <div class="p-8 text-center text-slate-500">
-                            <i class="fas fa-info-circle text-4xl mb-4 opacity-50 block"></i>
-                            <p class="font-semibold text-lg text-slate-700">Tidak Ada Metadata Daftar Isi</p>
-                            <p class="text-sm mt-2">Buku PDF ini tidak menyimpan data struktur bab (Outline). Silakan gunakan navigasi manual di bawah.</p>
+                            <i class="fas fa-info-circle text-3xl sm:text-4xl mb-4 opacity-50 block"></i>
+                            <p class="font-semibold text-base sm:text-lg text-slate-700">Tidak Ada Metadata Daftar Isi</p>
+                            <p class="text-xs sm:text-sm mt-2">Buku ini tidak menyimpan data struktur bab (Bookmarks). Silakan gunakan navigasi manual.</p>
                         </div>
                     `;
                     return;
                 }
 
-                // Fungsi Rekursif untuk membangun hierarki Daftar Isi
                 const renderOutlineItem = async (item, level = 0) => {
                     const div = document.createElement('div');
                     const isChapter = level === 0;
                     div.className = `toc-item ${isChapter ? 'toc-chapter' : ''}`;
-                    // Indentasi untuk sub-bab
                     if (!isChapter) {
                         div.style.marginLeft = `${level * 15}px`;
                         div.style.borderLeft = "2px solid #e2e8f0";
@@ -446,57 +541,43 @@
                     div.innerHTML = `<span class="truncate pr-2">${item.title}</span> <i class="fas fa-angle-right text-xs opacity-50"></i>`;
 
                     div.onclick = async () => {
-                        toggleModal(false); // Tutup modal saat diklik
-                        
-                        // Menangani Destinasi Halaman dari PDF.js dengan lebih akurat
+                        toggleModal(false); 
                         let dest = item.dest;
-                        if (typeof dest === 'string') {
-                            dest = await pdfDoc.getDestination(dest);
-                        }
+                        if (typeof dest === 'string') { dest = await pdfDoc.getDestination(dest); }
                         
                         if (Array.isArray(dest)) {
                             const ref = dest[0];
                             try {
                                 let pageIndex;
-                                // Pengecekan Presisi: Menangani berbagai format referensi halaman PDF
-                                if (typeof ref === 'object' && ref !== null) {
-                                    // Format standar: referensi berupa objek
-                                    pageIndex = await pdfDoc.getPageIndex(ref);
-                                } else if (Number.isInteger(ref)) {
-                                    // Format alternatif: referensi langsung berupa angka urutan halaman
-                                    pageIndex = ref;
-                                } else {
-                                    console.warn("Format referensi halaman tidak dikenali.");
-                                    return;
+                                // Perbaikan Parsing Link: Deteksi yang akurat untuk berbagai jenis link referensi di PDF
+                                if (typeof ref === 'object' && ref !== null) { 
+                                    pageIndex = await pdfDoc.getPageIndex(ref); 
+                                } else if (Number.isInteger(ref)) { 
+                                    pageIndex = ref; 
+                                } else { 
+                                    return; 
                                 }
-                                
-                                queueRenderPage(pageIndex + 1); // PDF.js page index dimulai dari 0
-                            } catch (e) {
-                                console.warn("Tidak dapat melompat ke halaman tersebut", e);
-                            }
+                                changePage(pageIndex + 1);
+                            } catch (e) { console.warn("Lompatan halaman gagal", e); }
                         }
                     };
-                    
                     container.appendChild(div);
 
-                    // Render anak sub-bab jika ada
                     if (item.items && item.items.length > 0) {
-                        for (let subItem of item.items) {
-                            await renderOutlineItem(subItem, level + 1);
-                        }
+                        for (let subItem of item.items) { await renderOutlineItem(subItem, level + 1); }
                     }
                 };
 
-                for (let item of outline) {
-                    await renderOutlineItem(item);
-                }
+                for (let item of outline) { await renderOutlineItem(item); }
 
             } catch (e) {
-                console.error("Kesalahan memuat Outline PDF", e);
-                container.innerHTML = '<div class="p-4 text-center text-red-500 font-semibold"><i class="fas fa-exclamation-triangle"></i> Gagal mengekstrak daftar isi.</div>';
+                container.innerHTML = '<div class="p-4 text-center text-red-500 font-semibold text-sm"><i class="fas fa-exclamation-triangle"></i> Gagal mengekstrak daftar isi.</div>';
             }
         }
 
+        // --- SISTEM UPLOAD PDF ---
+        document.getElementById('welcome-file-upload').addEventListener('change', handleFileUpload);
+        
         function handleFileUpload(e) {
             const file = e.target.files[0];
             if(!file || file.type !== 'application/pdf') {
@@ -504,105 +585,308 @@
                 return;
             }
 
-            // Ubah UI menjadi Loading State
             loadingContent.classList.add('hidden');
             loadingSpinnerWrapper.classList.remove('hidden');
             loadingSpinnerWrapper.classList.add('flex');
             loadingScreen.style.display = 'flex';
             loadingText.innerText = `Memproses "${file.name}"...`;
-            
-            // Mengubah Judul Aplikasi
             document.getElementById('app-title').innerText = file.name.replace('.pdf', '');
 
             const fileReader = new FileReader();
             fileReader.onload = function() {
-                const typedarray = new Uint8Array(this.result);
+                originalPdfBytes = new Uint8Array(this.result); 
                 
-                const loadingTask = pdfjsLib.getDocument({ data: typedarray });
+                const loadingTask = pdfjsLib.getDocument({ data: originalPdfBytes });
                 loadingTask.promise.then(pdf => {
                     pdfDoc = pdf;
                     totalPagesEl.textContent = pdfDoc.numPages;
                     pageInput.max = pdfDoc.numPages;
                     pageNum = 1;
+                    pageDrawings = {}; 
                     
-                    // Bangun Daftar Isi & Render Halaman 1
                     buildDynamicTOC();
-                    queueRenderPage(pageNum);
+                    renderPage(pageNum); 
                     
-                    // Sembunyikan layar loading setelah selesai
                     setTimeout(() => { loadingScreen.style.display = 'none'; }, 500);
                 }).catch(err => {
-                    console.error("Kesalahan Render PDF:", err);
-                    loadingSpinnerWrapper.innerHTML = `
-                        <div class="text-red-600 bg-red-50 p-6 rounded-xl border border-red-200 mt-4 max-w-sm text-center">
-                            <i class="fas fa-times-circle text-4xl mb-3"></i>
-                            <h4 class="font-bold text-lg mb-2">Gagal Memproses File</h4>
-                            <p class="text-sm mb-4">File PDF mungkin rusak atau diproteksi kata sandi (encrypted).</p>
-                            <button onclick="location.reload()" class="bg-slate-800 text-white px-6 py-2 rounded-lg font-bold w-full transition hover:bg-slate-900">Kembali</button>
-                        </div>
-                    `;
+                    loadingSpinnerWrapper.innerHTML = `<div class="text-red-600 bg-red-50 p-6 rounded-xl border border-red-200 mt-4 text-center mx-4"><i class="fas fa-times-circle text-3xl sm:text-4xl mb-3"></i><h4 class="font-bold text-base sm:text-lg mb-2">Gagal Memproses File</h4><p class="text-xs sm:text-sm mb-4">File PDF rusak atau dilindungi sandi.</p><button onclick="location.reload()" class="bg-slate-800 text-white px-6 py-2 rounded-lg font-bold w-full text-sm">Kembali</button></div>`;
                 });
             };
             fileReader.readAsArrayBuffer(file);
         }
 
-        // Tautkan fungsi unggah ke kedua tombol input file
-        document.getElementById('welcome-file-upload').addEventListener('change', handleFileUpload);
-        document.getElementById('header-file-upload').addEventListener('change', handleFileUpload);
-
-        pageInput.addEventListener('change', (e) => {
-            if (!pdfDoc) {
-                e.target.value = 1;
-                return;
-            }
-            let val = parseInt(e.target.value);
-            if(val > 0 && val <= pdfDoc.numPages) {
-                queueRenderPage(val);
-            } else {
-                e.target.value = pageNum;
-            }
-        });
-
+        // --- MODAL & SWIPE AMAN ---
         function toggleModal(show) {
             const modal = document.getElementById('toc-modal');
-            if (show) modal.classList.add('active');
+            if (show) { if(!pdfDoc) return; modal.classList.add('active'); }
             else modal.classList.remove('active');
         }
 
-        // Tutup modal jika area luar diklik
         document.getElementById('toc-modal').addEventListener('click', (e) => {
             if (e.target === document.getElementById('toc-modal')) toggleModal(false);
         });
 
-        // Kontrol Keyboard (Kiri/Kanan)
         document.addEventListener('keydown', (e) => {
-            if (!pdfDoc) return; 
-            if (document.getElementById('toc-modal').classList.contains('active')) return;
+            if (!pdfDoc || document.getElementById('toc-modal').classList.contains('active')) return;
             if (e.key === 'ArrowRight') goNext(); 
             else if (e.key === 'ArrowLeft') goPrev();
         });
 
-        // Kontrol Layar Sentuh (Swipe Kiri/Kanan)
         let touchStartX = 0;
-        let touchEndX = 0;
-        const readerContainer = document.getElementById('reader-container');
-
-        readerContainer.addEventListener('touchstart', e => {
+        document.getElementById('reader-container').addEventListener('touchstart', e => {
+            if (!pdfDoc || isDrawingMode) return; 
             touchStartX = e.changedTouches[0].screenX;
         }, {passive: true});
 
-        readerContainer.addEventListener('touchend', e => {
-            if (!pdfDoc) return; 
-            touchEndX = e.changedTouches[0].screenX;
-            handleSwipe();
+        document.getElementById('reader-container').addEventListener('touchend', e => {
+            if (!pdfDoc || isDrawingMode) return; 
+            const touchEndX = e.changedTouches[0].screenX;
+            if (touchStartX - touchEndX > 60) goNext(); 
+            else if (touchEndX - touchStartX > 60) goPrev(); 
         }, {passive: true});
 
-        function handleSwipe() {
-            if (!pdfDoc) return;
-            const threshold = 60;
-            // Mode LTR (Kiri ke Kanan): Geser kiri = Next, Geser kanan = Prev
-            if (touchStartX - touchEndX > threshold) goNext(); 
-            else if (touchEndX - touchStartX > threshold) goPrev(); 
+        // --- SISTEM ANOTASI (CORET-CORET & STABILO) ---
+        function toggleEditMode() {
+            if (!pdfDoc) return; 
+            
+            isDrawingMode = !isDrawingMode;
+            const btn = document.getElementById('btn-edit-mode');
+            const toolbar = document.getElementById('edit-toolbar');
+            
+            if (isDrawingMode) {
+                btn.classList.add('bg-blue-600', 'text-white');
+                btn.classList.remove('bg-blue-50', 'text-blue-700');
+                toolbar.classList.remove('hidden');
+                drawCanvas.style.pointerEvents = 'auto'; 
+                setTool('pen');
+            } else {
+                btn.classList.remove('bg-blue-600', 'text-white');
+                btn.classList.add('bg-blue-50', 'text-blue-700');
+                toolbar.classList.add('hidden');
+                drawCanvas.style.pointerEvents = 'none'; 
+                saveCurrentDrawing();
+            }
+        }
+
+        function setTool(tool) {
+            currentTool = tool;
+            document.querySelectorAll('.btn-tool').forEach(btn => btn.classList.remove('active-tool'));
+            document.getElementById(`tool-${tool}`).classList.add('active-tool');
+        }
+
+        function getMousePos(e) {
+            const rect = drawCanvas.getBoundingClientRect();
+            let clientX = e.clientX, clientY = e.clientY;
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX; clientY = e.touches[0].clientY;
+            }
+            const scaleX = drawCanvas.width / rect.width;
+            const scaleY = drawCanvas.height / rect.height;
+            return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+        }
+
+        function startDrawing(e) {
+            if (!isDrawingMode || !pdfDoc) return;
+            if (e.type === 'touchstart' && e.touches.length > 1) return; 
+            if (e.cancelable) e.preventDefault(); 
+            
+            const pos = getMousePos(e);
+
+            // Fitur Teks Baru (Klik untuk mengetik)
+            if (currentTool === 'text') {
+                const rect = drawCanvas.getBoundingClientRect();
+                let cssX = e.clientX - rect.left;
+                let cssY = e.clientY - rect.top;
+                if (e.touches && e.touches.length > 0) {
+                    cssX = e.touches[0].clientX - rect.left;
+                    cssY = e.touches[0].clientY - rect.top;
+                }
+                createTextInput(pos.x, pos.y, cssX, cssY);
+                return; // Jangan mulai menggambar garis jika mode teks
+            }
+            
+            isDrawing = true;
+            isCanvasDirty = true;
+            drawCtx.beginPath();
+            drawCtx.moveTo(pos.x, pos.y);
+            
+            if (currentTool === 'pen') {
+                drawCtx.strokeStyle = '#dc2626'; 
+                drawCtx.lineWidth = Math.max(3, drawCanvas.width / 400); 
+                drawCtx.lineCap = 'round';
+                drawCtx.lineJoin = 'round';
+                drawCtx.globalCompositeOperation = 'source-over';
+            } else if (currentTool === 'highlight') {
+                drawCtx.strokeStyle = 'rgba(234, 179, 8, 0.4)'; 
+                drawCtx.lineWidth = Math.max(15, drawCanvas.width / 60);
+                drawCtx.lineCap = 'butt';
+                drawCtx.lineJoin = 'round';
+                drawCtx.globalCompositeOperation = 'source-over';
+            } else if (currentTool === 'whiteout') { 
+                // Fitur Tipe-X: Mewarnai dengan putih tebal
+                drawCtx.strokeStyle = 'white'; 
+                drawCtx.lineWidth = Math.max(25, drawCanvas.width / 40);
+                drawCtx.lineCap = 'round';
+                drawCtx.lineJoin = 'round';
+                drawCtx.globalCompositeOperation = 'source-over';
+            } else if (currentTool === 'eraser') {
+                drawCtx.lineWidth = Math.max(25, drawCanvas.width / 30);
+                drawCtx.lineCap = 'round';
+                drawCtx.lineJoin = 'round';
+                drawCtx.globalCompositeOperation = 'destination-out'; 
+            }
+        }
+
+        function drawLine(e) {
+            if (!isDrawing || !isDrawingMode || !pdfDoc) return;
+            if (e.cancelable) e.preventDefault();
+            const pos = getMousePos(e);
+            drawCtx.lineTo(pos.x, pos.y);
+            drawCtx.stroke();
+        }
+
+        function stopDrawing(e) {
+            if (!isDrawing) return;
+            isDrawing = false;
+            drawCtx.closePath();
+        }
+
+        drawCanvas.addEventListener('mousedown', startDrawing);
+        drawCanvas.addEventListener('mousemove', drawLine);
+        drawCanvas.addEventListener('mouseup', stopDrawing);
+        drawCanvas.addEventListener('mouseout', stopDrawing);
+
+        drawCanvas.addEventListener('touchstart', startDrawing, {passive: false});
+        drawCanvas.addEventListener('touchmove', drawLine, {passive: false});
+        drawCanvas.addEventListener('touchend', stopDrawing);
+        drawCanvas.addEventListener('touchcancel', stopDrawing);
+
+        // --- SISTEM INPUT TEKS DINAMIS (KETIK TEKS) ---
+        function createTextInput(canvasX, canvasY, cssX, cssY) {
+            // Hapus input sebelumnya jika masih ada yang terbuka
+            const existing = document.getElementById('dynamic-text-input');
+            if (existing && existing.parentNode) { existing.remove(); }
+
+            const input = document.createElement('input');
+            input.id = 'dynamic-text-input';
+            input.type = 'text';
+            input.placeholder = 'Ketik... (Lalu klik Enter)';
+            
+            // Styling kotak input agar presisi di atas kanvas
+            input.style.position = 'absolute';
+            input.style.left = cssX + 'px';
+            input.style.top = (cssY - 15) + 'px'; 
+            input.style.fontSize = '14px';
+            input.style.fontWeight = 'bold';
+            input.style.color = '#0f172a';
+            input.style.border = '2px dashed #3b82f6';
+            input.style.background = 'rgba(255, 255, 255, 0.9)';
+            input.style.padding = '4px 8px';
+            input.style.borderRadius = '4px';
+            input.style.outline = 'none';
+            input.style.zIndex = '100';
+            input.style.minWidth = '160px';
+
+            document.getElementById('canvas-wrapper').appendChild(input);
+            input.focus();
+
+            let isSaved = false; // Kunci pengaman agar tidak error saat menekan Enter
+            const saveText = () => { 
+                if (isSaved) return;
+                isSaved = true;
+                finalizeText(input.value, canvasX, canvasY, input); 
+            };
+            
+            // Simpan saat klik di luar kotak (blur)
+            input.addEventListener('blur', saveText);
+            // Simpan saat menekan tombol Enter di Keyboard/HP
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveText();
+                }
+            });
+        }
+
+        function finalizeText(text, x, y, inputEl) {
+            if (text && text.trim() !== '') {
+                // Ukuran teks menyesuaikan otomatis dengan besarnya halaman PDF
+                const fontSize = Math.max(14, drawCanvas.width / 50);
+                drawCtx.font = `bold ${fontSize}px 'Inter', sans-serif`;
+                drawCtx.fillStyle = "#0f172a"; // Warna biru gelap
+                drawCtx.textBaseline = "middle";
+                drawCtx.globalCompositeOperation = 'source-over';
+                drawCtx.fillText(text.trim(), x, y);
+                
+                isCanvasDirty = true;
+                saveCurrentDrawing();
+            }
+            // Menggunakan parentNode.removeChild agar lebih aman di semua Browser
+            if (inputEl && inputEl.parentNode) {
+                inputEl.parentNode.removeChild(inputEl);
+            }
+        }
+
+        function clearCanvas() {
+            if(!pdfDoc) return;
+            drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+            pageDrawings[pageNum] = null; 
+            isCanvasDirty = false;
+        }
+
+        function saveCurrentDrawing() {
+            if (isCanvasDirty && pdfDoc) {
+                pageDrawings[pageNum] = drawCanvas.toDataURL('image/png');
+                isCanvasDirty = false;
+            }
+        }
+
+        // --- SISTEM PENGGABUNGAN & EXPORT PDF (PDF-LIB) ---
+        async function exportEditedPdf() {
+            if (!originalPdfBytes || !pdfDoc) return;
+            
+            saveCurrentDrawing(); 
+            
+            loadingScreen.style.display = 'flex';
+            loadingContent.classList.add('hidden');
+            loadingSpinnerWrapper.classList.remove('hidden');
+            loadingText.innerText = `Menyatukan coretan & membuat PDF baru...`;
+            
+            try {
+                const { PDFDocument } = PDFLib;
+                const pdfDocToSave = await PDFDocument.load(originalPdfBytes);
+                const pages = pdfDocToSave.getPages();
+                
+                for (let i = 1; i <= pages.length; i++) {
+                    if (pageDrawings[i]) {
+                        const img = await pdfDocToSave.embedPng(pageDrawings[i]);
+                        const page = pages[i - 1];
+                        const { width, height } = page.getSize();
+                        page.drawImage(img, {
+                            x: 0,
+                            y: 0,
+                            width: width,  
+                            height: height
+                        });
+                    }
+                }
+                
+                const pdfBytes = await pdfDocToSave.save();
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = document.getElementById('app-title').innerText + '_Diedit.pdf';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                console.error("Gagal mengekspor PDF", e);
+                alert("Gagal menyatukan PDF. Pastikan file tidak diproteksi sandi.");
+            }
+            
+            setTimeout(() => { loadingScreen.style.display = 'none'; }, 500);
         }
 
         function downloadLicense() {
@@ -614,7 +898,7 @@
 Dengan ini dideklarasikan secara resmi bahwa perangkat lunak:
 Nama Alat : RBA (Rumah Bahasa Arab) OmniReader Pro™
 Fungsi    : Master PDF Generator & Universal Reader
-Pemilik   : M. Nur Muslim (Hak Paten Dilindungi)
+Pemilik   : M. Nur Muslim (Hak Cipta Dilindungi)
 
 1. STATUS KEPEMILIKAN & WAKAF
 Perangkat lunak ini merupakan hak cipta dan karya intelektual 
@@ -633,29 +917,22 @@ komunitas, maupun lembaga/institusi) untuk:
 Demi menjaga niat tulus dari pewakafan ini, SANGAT DILARANG 
 KERAS untuk:
   a. Memperjualbelikan aplikasi ini dalam bentuk dan dalih apapun.
-  b. Menjadikan aplikasi ini sebagai alat komersial untuk mencari 
-     keuntungan finansial sepihak.
-  c. Menghapus nama pengembang (M. Nur Muslim) atau mengklaim
+  b. Menghapus nama pengembang (M. Nur Muslim) atau mengklaim
      hak cipta atas logo/sistem milik RBA OmniReader Pro™.
 
-Semoga alat ini membawa keberkahan, manfaat, dan kemudahan 
-bagi para pencari ilmu di mana pun berada.
+Semoga alat ini membawa keberkahan, manfaat, dan kemudahan.
 
 Dideklarasikan pada: Agustus 2026
-Untuk kemaslahatan bersama.
 
 Hormat kami,
-
-
 M. Nur Muslim
-RBA - Rumah Bahasa Arab (Pemegang Paten & Pengembang)`;
+RBA - Rumah Bahasa Arab`;
 
-            // Membuat Blob Text dan memicu pengunduhan file
             const blob = new Blob([licenseText], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'Deklarasi_Lisensi_Wakaf_RBA_OmniReader_Pro.txt';
+            a.download = 'Lisensi_RBA_OmniReader_Pro.txt';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
