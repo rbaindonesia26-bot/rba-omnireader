@@ -5,7 +5,6 @@
     <!-- Meta viewport sangat penting untuk layar HP (Mobile Responsive) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>RBA OmniReader Pro™ - Master PDF</title>
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
@@ -35,8 +34,7 @@
             display: flex;
             flex-direction: column;
             margin: 0;
-            /* Perbaikan Layar HP: Gunakan 100dvh agar tidak tertutup address bar browser mobile */
-            height: 100vh; /* Fallback untuk browser lama */
+            height: 100vh;
             height: 100dvh; 
         }
 
@@ -48,15 +46,13 @@
             margin: 0 auto;
             width: 100%;
             padding: 10px;
-            /* Pastikan padding tidak menambah tinggi elemen melampaui layar */
             box-sizing: border-box; 
             padding-bottom: env(safe-area-inset-bottom, 10px);
         }
 
         .reader-wrapper {
-            /* Perbaikan Tata Letak: Biarkan flexbox yang menghitung ruang tersisa, bukan dengan calc() manual */
             flex: 1;
-            min-height: 0; /* CRITICAL: Mengizinkan anak flex untuk menyusut pada layar kecil */
+            min-height: 0;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -69,7 +65,6 @@
             overflow: hidden;
         }
 
-        /* Container Pembungkus Kanvas PDF dan Kanvas Coretan */
         #canvas-wrapper {
             position: relative;
             max-width: 100%;
@@ -94,7 +89,7 @@
             border-radius: 15px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             margin-bottom: 5px;
-            flex-shrink: 0; /* Mencegah elemen menyusut saat layar sempit */
+            flex-shrink: 0;
         }
 
         .btn-control {
@@ -128,9 +123,8 @@
             box-shadow: none;
         }
 
-        /* Toolbar Edit (Anotasi) */
         .edit-toolbar {
-            flex-shrink: 0; /* Mencegah elemen menyusut saat layar sempit */
+            flex-shrink: 0;
         }
         
         .btn-tool {
@@ -154,7 +148,6 @@
             color: #0f172a;
         }
 
-        /* Modal Daftar Isi */
         .modal {
             display: none;
             position: fixed;
@@ -227,7 +220,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            overflow-y: auto; /* Jika layar sangat kecil, biarkan welcome screen bisa di-scroll */
+            overflow-y: auto;
         }
         
         .spinner {
@@ -298,7 +291,7 @@
                 </div>
             </div>
             <div class="flex gap-2 shrink-0">
-                <!-- TAMBAHAN BARU: Tombol Buka File Lain (Ikon Folder) -->
+                <!-- Tombol Buka File Lain (Ikon Folder) -->
                 <button onclick="document.getElementById('welcome-file-upload').click()" class="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2 border border-emerald-200" title="Buka Dokumen Lain">
                     <i class="fas fa-folder-open"></i>
                     <span class="hidden md:inline">Buka File</span>
@@ -347,6 +340,7 @@
             <button onclick="setTool('text')" class="btn-tool" id="tool-text"><i class="fas fa-font text-blue-600"></i> Teks</button>
             <button onclick="setTool('eraser')" class="btn-tool" id="tool-eraser" title="Hapus Coretan/Tipe-X/Teks"><i class="fas fa-eraser"></i> Hapus</button>
             <div class="w-px h-6 sm:h-8 bg-slate-300 mx-1"></div>
+            <button onclick="undoCanvas()" class="btn-tool text-indigo-600 hover:bg-indigo-50 border-indigo-200" title="Urungkan (Undo)"><i class="fas fa-undo"></i> Undo</button>
             <button onclick="clearCanvas()" class="btn-tool hover:text-red-600"><i class="fas fa-trash"></i> Bersihkan</button>
             <button onclick="exportEditedPdf()" class="btn-tool bg-amber-600 text-white font-bold border-amber-700 hover:bg-amber-700 shadow-md"><i class="fas fa-file-export"></i> Simpan PDF</button>
         </div>
@@ -398,7 +392,7 @@
         const loadingSpinnerWrapper = document.getElementById('loading-spinner-wrapper');
         const loadingText = document.getElementById('loading-text');
 
-        // State Anotasi (Drawing)
+        // State Anotasi & Undo History
         const drawCanvas = document.getElementById('drawing-canvas');
         const drawCtx = drawCanvas.getContext('2d');
         let isDrawingMode = false;
@@ -406,6 +400,7 @@
         let isCanvasDirty = false;
         let currentTool = 'pen';
         let pageDrawings = {}; 
+        let undoHistory = {}; // Menyimpan riwayat stack untuk undo per halaman
 
         // --- SISTEM RENDER PDF FIT-TO-SCREEN ---
         function renderPage(num) {
@@ -416,18 +411,15 @@
 
             pdfDoc.getPage(num).then(function(page) {
                 const container = document.getElementById('reader-container');
-                // Mengurangi padding internal container (10px tiap sisi)
                 const containerWidth = container.clientWidth - 20; 
                 const containerHeight = container.clientHeight - 20;
 
                 const unscaledViewport = page.getViewport({ scale: 1.0 });
 
-                // Fit to Screen Logic: Menyesuaikan agar pas di layar mana pun
                 const scaleX = containerWidth / unscaledViewport.width;
                 const scaleY = containerHeight / unscaledViewport.height;
                 const fitScale = Math.min(scaleX, scaleY); 
 
-                // Optimasi resolusi tinggi untuk layar tajam (Retina/Mobile)
                 const pixelRatio = window.devicePixelRatio || 1;
                 const highResScale = fitScale * pixelRatio * 1.5;
 
@@ -436,7 +428,6 @@
                 canvas.width = viewport.width;
                 canvas.height = viewport.height;
 
-                // Tampilan CSS akhir (mengembalikan ke ukuran visual agar tajam)
                 const displayWidth = `${viewport.width / pixelRatio / 1.5}px`;
                 const displayHeight = `${viewport.height / pixelRatio / 1.5}px`;
                 
@@ -452,11 +443,9 @@
                     pageIsRendering = false;
                     canvasWrapper.style.opacity = '1';
                     
-                    // Sinkronisasi Kanvas Coretan dengan Kanvas PDF
                     drawCanvas.width = canvas.width;
                     drawCanvas.height = canvas.height;
                     
-                    // Mengembalikan coretan yang tersimpan di halaman ini
                     drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
                     if (pageDrawings[num]) {
                         const img = new Image();
@@ -477,21 +466,17 @@
             document.getElementById('next-btn').disabled = num >= pdfDoc.numPages;
         }
 
-        // --- Auto-Resize Event ---
-        // Menggambar ulang PDF secara otomatis jika orientasi HP diubah atau layar ditarik
         let resizeTimer;
         window.addEventListener('resize', () => {
             if (!pdfDoc) return;
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(() => {
-                // Hindari menggambar ulang saat sedang mode coret untuk mencegah kehilangan coretan yang belum disave internal
                 if (!isDrawingMode) {
                     renderPage(pageNum);
                 }
             }, 250);
         });
 
-        // --- SISTEM PERGANTIAN HALAMAN AMAN ---
         function queueRenderPage(num) {
             if (!pdfDoc) return;
             if (pageIsRendering) { pageNumPending = num; } 
@@ -555,7 +540,6 @@
                             const ref = dest[0];
                             try {
                                 let pageIndex;
-                                // Perbaikan Parsing Link: Deteksi yang akurat untuk berbagai jenis link referensi di PDF
                                 if (typeof ref === 'object' && ref !== null) { 
                                     pageIndex = await pdfDoc.getPageIndex(ref); 
                                 } else if (Number.isInteger(ref)) { 
@@ -588,11 +572,10 @@
             const file = e.target.files[0];
             if(!file || file.type !== 'application/pdf') {
                 alert('Harap pilih dokumen berformat PDF.');
-                e.target.value = ''; // Reset input
+                e.target.value = ''; 
                 return;
             }
 
-            // Matikan mode edit/coretan jika sedang aktif sebelum membuka file baru
             if (isDrawingMode) {
                 toggleEditMode();
             }
@@ -615,6 +598,7 @@
                     pageInput.max = pdfDoc.numPages;
                     pageNum = 1;
                     pageDrawings = {}; 
+                    undoHistory = {};
                     
                     buildDynamicTOC();
                     renderPage(pageNum); 
@@ -625,10 +609,9 @@
                 });
             };
             fileReader.readAsArrayBuffer(file);
-            e.target.value = ''; // Reset nilai input agar pengguna bisa membuka file yang sama lagi jika diperlukan
+            e.target.value = ''; 
         }
 
-        // --- MODAL & SWIPE AMAN ---
         function toggleModal(show) {
             const modal = document.getElementById('toc-modal');
             if (show) { if(!pdfDoc) return; modal.classList.add('active'); }
@@ -658,7 +641,34 @@
             else if (touchEndX - touchStartX > 60) goPrev(); 
         }, {passive: true});
 
-        // --- SISTEM ANOTASI (CORET-CORET & STABILO) ---
+        // --- SISTEM ANOTASI & UNDO ---
+        function saveStateForUndo() {
+            if (!pdfDoc) return;
+            if (!undoHistory[pageNum]) {
+                undoHistory[pageNum] = [];
+            }
+            // Simpan snapshot saat ini ke dalam riwayat undo
+            const currentDataUrl = drawCanvas.toDataURL('image/png');
+            undoHistory[pageNum].push(currentDataUrl);
+            // Batasi riwayat hingga 20 langkah terakhir agar memori tidak penuh
+            if (undoHistory[pageNum].length > 20) {
+                undoHistory[pageNum].shift();
+            }
+        }
+
+        function undoCanvas() {
+            if (!pdfDoc || !undoHistory[pageNum] || undoHistory[pageNum].length === 0) return;
+            const previousStateUrl = undoHistory[pageNum].pop();
+            const img = new Image();
+            img.onload = () => {
+                drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+                drawCtx.drawImage(img, 0, 0);
+                pageDrawings[pageNum] = previousStateUrl;
+                isCanvasDirty = true;
+            };
+            img.src = previousStateUrl;
+        }
+
         function toggleEditMode() {
             if (!pdfDoc) return; 
             
@@ -705,7 +715,6 @@
             
             const pos = getMousePos(e);
 
-            // Fitur Teks Baru (Klik untuk mengetik)
             if (currentTool === 'text') {
                 const rect = drawCanvas.getBoundingClientRect();
                 let cssX = e.clientX - rect.left;
@@ -715,9 +724,12 @@
                     cssY = e.touches[0].clientY - rect.top;
                 }
                 createTextInput(pos.x, pos.y, cssX, cssY);
-                return; // Jangan mulai menggambar garis jika mode teks
+                return; 
             }
             
+            // Simpan snapshot sebelum mulai coret
+            saveStateForUndo();
+
             isDrawing = true;
             isCanvasDirty = true;
             drawCtx.beginPath();
@@ -736,7 +748,6 @@
                 drawCtx.lineJoin = 'round';
                 drawCtx.globalCompositeOperation = 'source-over';
             } else if (currentTool === 'whiteout') { 
-                // Fitur Tipe-X: Mewarnai dengan putih tebal
                 drawCtx.strokeStyle = 'white'; 
                 drawCtx.lineWidth = Math.max(25, drawCanvas.width / 40);
                 drawCtx.lineCap = 'round';
@@ -774,45 +785,200 @@
         drawCanvas.addEventListener('touchend', stopDrawing);
         drawCanvas.addEventListener('touchcancel', stopDrawing);
 
-        // --- SISTEM INPUT TEKS DINAMIS (KETIK TEKS) ---
-        function createTextInput(canvasX, canvasY, cssX, cssY) {
-            // Hapus input sebelumnya jika masih ada yang terbuka
-            const existing = document.getElementById('dynamic-text-input');
+        // --- SISTEM INPUT TEKS DINAMIS & DRAGGABLE WIDGET ---
+        function createTextInput(initialCanvasX, initialCanvasY, cssX, cssY) {
+            const existing = document.getElementById('dynamic-text-input-container');
             if (existing && existing.parentNode) { existing.remove(); }
+
+            const container = document.createElement('div');
+            container.id = 'dynamic-text-input-container';
+            container.style.position = 'absolute';
+            container.style.left = cssX + 'px';
+            container.style.top = (cssY - 20) + 'px';
+            container.style.zIndex = '100';
+            container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+            container.style.gap = '8px';
+            container.style.background = 'rgba(255, 255, 255, 0.95)';
+            container.style.padding = '8px';
+            container.style.borderRadius = '10px';
+            container.style.border = '2px dashed #3b82f6';
+            container.style.boxShadow = '0 10px 25px -5px rgba(0, 0, 0, 0.3)';
+
+            const topRow = document.createElement('div');
+            topRow.style.display = 'flex';
+            topRow.style.alignItems = 'center';
+            topRow.style.gap = '8px';
+
+            const dragHandle = document.createElement('div');
+            dragHandle.innerHTML = '<i class="fas fa-arrows-alt"></i>';
+            dragHandle.style.cursor = 'move';
+            dragHandle.style.color = '#3b82f6';
+            dragHandle.style.padding = '4px 8px';
+            dragHandle.style.touchAction = 'none';
+            dragHandle.title = 'Tahan dan geser posisi teks';
 
             const input = document.createElement('input');
             input.id = 'dynamic-text-input';
             input.type = 'text';
-            input.placeholder = 'Ketik... (Lalu klik Enter)';
-            
-            // Styling kotak input agar presisi di atas kanvas
-            input.style.position = 'absolute';
-            input.style.left = cssX + 'px';
-            input.style.top = (cssY - 15) + 'px'; 
-            input.style.fontSize = '14px';
-            input.style.fontWeight = 'bold';
+            input.placeholder = 'Ketik catatan...';
+            input.style.fontSize = '16px';
+            input.style.fontFamily = "'Inter', sans-serif";
             input.style.color = '#0f172a';
-            input.style.border = '2px dashed #3b82f6';
-            input.style.background = 'rgba(255, 255, 255, 0.9)';
+            input.style.fontWeight = 'bold';
+            input.style.border = '1px solid #cbd5e1';
+            input.style.borderRadius = '6px';
             input.style.padding = '4px 8px';
-            input.style.borderRadius = '4px';
             input.style.outline = 'none';
-            input.style.zIndex = '100';
-            input.style.minWidth = '160px';
+            input.style.minWidth = '180px';
+            input.style.flex = '1';
 
-            document.getElementById('canvas-wrapper').appendChild(input);
+            const saveBtn = document.createElement('button');
+            saveBtn.innerHTML = '<i class="fas fa-check"></i>';
+            saveBtn.style.background = '#22c55e';
+            saveBtn.style.color = 'white';
+            saveBtn.style.border = 'none';
+            saveBtn.style.borderRadius = '6px';
+            saveBtn.style.padding = '6px 12px';
+            saveBtn.style.cursor = 'pointer';
+            saveBtn.title = 'Cetak ke PDF';
+
+            topRow.appendChild(dragHandle);
+            topRow.appendChild(input);
+            topRow.appendChild(saveBtn);
+
+            const bottomRow = document.createElement('div');
+            bottomRow.style.display = 'flex';
+            bottomRow.style.alignItems = 'center';
+            bottomRow.style.gap = '8px';
+            bottomRow.style.borderTop = '1px solid #e2e8f0';
+            bottomRow.style.paddingTop = '8px';
+
+            const fontSelect = document.createElement('select');
+            fontSelect.innerHTML = `
+                <option value="'Inter', sans-serif">Inter</option>
+                <option value="'Arial', sans-serif">Arial</option>
+                <option value="'Times New Roman', serif">Times New Roman</option>
+                <option value="'Courier New', monospace">Courier</option>
+            `;
+            fontSelect.style.fontSize = '12px';
+            fontSelect.style.padding = '2px 4px';
+            fontSelect.style.borderRadius = '4px';
+            fontSelect.style.border = '1px solid #cbd5e1';
+            fontSelect.style.outline = 'none';
+
+            const sizeSelect = document.createElement('select');
+            sizeSelect.innerHTML = `
+                <option value="12">12 px</option>
+                <option value="14">14 px</option>
+                <option value="16" selected>16 px</option>
+                <option value="20">20 px</option>
+                <option value="24">24 px</option>
+                <option value="32">32 px</option>
+                <option value="48">48 px</option>
+            `;
+            sizeSelect.style.fontSize = '12px';
+            sizeSelect.style.padding = '2px 4px';
+            sizeSelect.style.borderRadius = '4px';
+            sizeSelect.style.border = '1px solid #cbd5e1';
+            sizeSelect.style.outline = 'none';
+
+            const colorPicker = document.createElement('input');
+            colorPicker.type = 'color';
+            colorPicker.value = '#0f172a';
+            colorPicker.style.width = '24px';
+            colorPicker.style.height = '24px';
+            colorPicker.style.border = 'none';
+            colorPicker.style.padding = '0';
+            colorPicker.style.cursor = 'pointer';
+            colorPicker.style.background = 'transparent';
+
+            const updateStyles = () => {
+                input.style.fontFamily = fontSelect.value;
+                input.style.fontSize = sizeSelect.value + 'px';
+                input.style.color = colorPicker.value;
+            };
+            fontSelect.addEventListener('change', updateStyles);
+            sizeSelect.addEventListener('change', updateStyles);
+            colorPicker.addEventListener('input', updateStyles);
+
+            bottomRow.appendChild(fontSelect);
+            bottomRow.appendChild(sizeSelect);
+            bottomRow.appendChild(colorPicker);
+
+            container.appendChild(topRow);
+            container.appendChild(bottomRow);
+            document.getElementById('canvas-wrapper').appendChild(container);
+
             input.focus();
 
-            let isSaved = false; // Kunci pengaman agar tidak error saat menekan Enter
+            let isDraggingText = false;
+            let startX, startY, initialLeft, initialTop;
+
+            const onDragStart = (e) => {
+                isDraggingText = true;
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                startX = clientX;
+                startY = clientY;
+                initialLeft = parseInt(container.style.left, 10) || 0;
+                initialTop = parseInt(container.style.top, 10) || 0;
+                if (e.cancelable) e.preventDefault();
+            };
+
+            const onDragMove = (e) => {
+                if (!isDraggingText) return;
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                const dx = clientX - startX;
+                const dy = clientY - startY;
+                container.style.left = (initialLeft + dx) + 'px';
+                container.style.top = (initialTop + dy) + 'px';
+                if (e.cancelable) e.preventDefault(); 
+            };
+
+            const onDragEnd = () => {
+                isDraggingText = false;
+            };
+
+            dragHandle.addEventListener('mousedown', onDragStart);
+            document.addEventListener('mousemove', onDragMove);
+            document.addEventListener('mouseup', onDragEnd);
+
+            dragHandle.addEventListener('touchstart', onDragStart, {passive: false});
+            document.addEventListener('touchmove', onDragMove, {passive: false});
+            document.addEventListener('touchend', onDragEnd);
+
+            let isSaved = false; 
             const saveText = () => { 
                 if (isSaved) return;
                 isSaved = true;
-                finalizeText(input.value, canvasX, canvasY, input); 
+
+                const rect = drawCanvas.getBoundingClientRect();
+                const inputRect = input.getBoundingClientRect();
+                
+                let finalCssX = inputRect.left - rect.left;
+                let finalCssY = (inputRect.top - rect.top) + (inputRect.height / 2);
+
+                const scaleX = drawCanvas.width / rect.width;
+                const scaleY = drawCanvas.height / rect.height;
+
+                const finalCanvasX = finalCssX * scaleX;
+                const finalCanvasY = finalCssY * scaleY;
+
+                const selectedFont = fontSelect.value;
+                const selectedSize = sizeSelect.value;
+                const selectedColor = colorPicker.value;
+
+                finalizeText(input.value, finalCanvasX, finalCanvasY, selectedFont, selectedSize, selectedColor, scaleY, container); 
+                
+                document.removeEventListener('mousemove', onDragMove);
+                document.removeEventListener('mouseup', onDragEnd);
+                document.removeEventListener('touchmove', onDragMove);
+                document.removeEventListener('touchend', onDragEnd);
             };
             
-            // Simpan saat klik di luar kotak (blur)
-            input.addEventListener('blur', saveText);
-            // Simpan saat menekan tombol Enter di Keyboard/HP
+            saveBtn.addEventListener('click', saveText);
             input.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
@@ -821,12 +987,15 @@
             });
         }
 
-        function finalizeText(text, x, y, inputEl) {
+        function finalizeText(text, x, y, fontFam, fontSz, color, scaleY, containerEl) {
             if (text && text.trim() !== '') {
-                // Ukuran teks menyesuaikan otomatis dengan besarnya halaman PDF
-                const fontSize = Math.max(14, drawCanvas.width / 50);
-                drawCtx.font = `bold ${fontSize}px 'Inter', sans-serif`;
-                drawCtx.fillStyle = "#0f172a"; // Warna biru gelap
+                // Simpan snapshot untuk undo sebelum teks dicetak permanen
+                saveStateForUndo();
+
+                const finalFontSize = parseFloat(fontSz) * scaleY;
+                
+                drawCtx.font = `bold ${finalFontSize}px ${fontFam}`;
+                drawCtx.fillStyle = color;
                 drawCtx.textBaseline = "middle";
                 drawCtx.globalCompositeOperation = 'source-over';
                 drawCtx.fillText(text.trim(), x, y);
@@ -834,14 +1003,15 @@
                 isCanvasDirty = true;
                 saveCurrentDrawing();
             }
-            // Menggunakan parentNode.removeChild agar lebih aman di semua Browser
-            if (inputEl && inputEl.parentNode) {
-                inputEl.parentNode.removeChild(inputEl);
+            if (containerEl && containerEl.parentNode) {
+                containerEl.parentNode.removeChild(containerEl);
             }
         }
 
         function clearCanvas() {
             if(!pdfDoc) return;
+            saveStateForUndo(); 
+            
             drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
             pageDrawings[pageNum] = null; 
             isCanvasDirty = false;
