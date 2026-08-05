@@ -298,6 +298,12 @@
                 </div>
             </div>
             <div class="flex gap-2 shrink-0">
+                <!-- TAMBAHAN BARU: Tombol Buka File Lain (Ikon Folder) -->
+                <button onclick="document.getElementById('welcome-file-upload').click()" class="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2 border border-emerald-200" title="Buka Dokumen Lain">
+                    <i class="fas fa-folder-open"></i>
+                    <span class="hidden md:inline">Buka File</span>
+                </button>
+
                 <button onclick="toggleEditMode()" class="bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2 border border-blue-200" id="btn-edit-mode" title="Mode Coret/Anotasi">
                     <i class="fas fa-pen-nib"></i>
                     <span class="hidden md:inline">Anotasi</span>
@@ -582,7 +588,13 @@
             const file = e.target.files[0];
             if(!file || file.type !== 'application/pdf') {
                 alert('Harap pilih dokumen berformat PDF.');
+                e.target.value = ''; // Reset input
                 return;
+            }
+
+            // Matikan mode edit/coretan jika sedang aktif sebelum membuka file baru
+            if (isDrawingMode) {
+                toggleEditMode();
             }
 
             loadingContent.classList.add('hidden');
@@ -613,6 +625,7 @@
                 });
             };
             fileReader.readAsArrayBuffer(file);
+            e.target.value = ''; // Reset nilai input agar pengguna bisa membuka file yang sama lagi jika diperlukan
         }
 
         // --- MODAL & SWIPE AMAN ---
