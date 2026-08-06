@@ -2,17 +2,14 @@
 <html lang="id" dir="ltr">
 <head>
     <meta charset="UTF-8">
-    <!-- Meta viewport sangat penting untuk layar HP (Mobile Responsive) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>RBA OmniReader Pro™ - Master PDF</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     
-    <!-- PDF.js library untuk merender file PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-    
-    <!-- PDF-Lib library untuk menyatukan coretan & mengunduh PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 
     <style>
@@ -124,9 +121,7 @@
             gap: 8px;
         }
 
-        @media (min-width: 640px) {
-            .btn-control { padding: 8px 24px; }
-        }
+        @media (min-width: 640px) { .btn-control { padding: 8px 24px; } }
 
         .btn-control:hover:not(:disabled) {
             opacity: 0.9;
@@ -141,9 +136,7 @@
             box-shadow: none;
         }
 
-        .edit-toolbar {
-            flex-shrink: 0;
-        }
+        .edit-toolbar { flex-shrink: 0; }
         
         .btn-tool {
             background: var(--panel-bg);
@@ -193,12 +186,7 @@
             border: 1px solid var(--border-color);
         }
 
-        .toc-list {
-            overflow-y: auto;
-            flex: 1;
-            padding-right: 10px;
-        }
-
+        .toc-list { overflow-y: auto; flex: 1; padding-right: 10px; }
         .toc-item {
             padding: 12px 10px;
             border-bottom: 1px solid var(--border-color);
@@ -210,25 +198,9 @@
             font-size: 0.9rem;
             color: var(--text-main);
         }
-
-        @media (min-width: 640px) {
-            .toc-item { font-size: 0.95rem; }
-        }
-
-        .toc-item:hover {
-            opacity: 0.85;
-            padding-left: 15px;
-            border-left: 4px solid var(--accent-gold);
-        }
-
-        .toc-chapter {
-            font-weight: 700;
-            color: var(--accent-blue);
-            background: rgba(0,0,0,0.03);
-            border-radius: 6px;
-            margin-top: 12px;
-            font-family: 'Playfair Display', serif;
-        }
+        @media (min-width: 640px) { .toc-item { font-size: 0.95rem; } }
+        .toc-item:hover { opacity: 0.85; padding-left: 15px; border-left: 4px solid var(--accent-gold); }
+        .toc-chapter { font-weight: 700; color: var(--accent-blue); background: rgba(0,0,0,0.03); border-radius: 6px; margin-top: 12px; font-family: 'Playfair Display', serif; }
 
         #loading-screen {
             position: fixed;
@@ -241,18 +213,8 @@
             align-items: center;
             overflow-y: auto;
         }
-        
-        .spinner {
-            border: 4px solid rgba(15, 23, 42, 0.1);
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            border-left-color: var(--accent-gold);
-            border-top-color: var(--accent-blue);
-            animation: spin 1s linear infinite;
-        }
+        .spinner { border: 4px solid rgba(15, 23, 42, 0.1); width: 50px; height: 50px; border-radius: 50%; border-left-color: var(--accent-gold); border-top-color: var(--accent-blue); animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; border-radius: 8px; }
         ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 8px; }
@@ -261,6 +223,7 @@
 </head>
 <body>
 
+    <!-- Layar Pemuatan -->
     <div id="loading-screen">
         <div id="loading-content" class="w-full max-w-lg px-4 py-8 flex flex-col items-center text-center">
             <a href="https://ibb.co.com/0VXNWm8v" target="_blank" class="mb-4 sm:mb-6 hover:scale-105 transition-transform duration-300 shrink-0">
@@ -289,13 +252,13 @@
                 </button>
             </div>
         </div>
-        
         <div id="loading-spinner-wrapper" class="hidden flex-col items-center justify-center h-full">
             <div class="spinner mb-6"></div>
             <p class="font-semibold text-base sm:text-lg animate-pulse" id="loading-text">Sedang memproses dokumen...</p>
         </div>
     </div>
 
+    <!-- Antarmuka Utama -->
     <div class="main-container">
         <header class="flex justify-between items-center bg-white dark:bg-slate-800 p-3 sm:p-4 rounded-xl shadow-sm z-10 relative shrink-0 border border-slate-200 dark:border-slate-700 transition-colors">
             <div class="flex items-center gap-3 sm:gap-4 overflow-hidden">
@@ -308,38 +271,24 @@
                 </div>
             </div>
             <div class="flex gap-1.5 sm:gap-2 shrink-0 items-center">
-                <!-- Tombol Buka File Lain -->
                 <button onclick="document.getElementById('welcome-file-upload').click()" class="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 px-2.5 sm:px-3 py-2 rounded-lg font-semibold transition flex items-center gap-1.5 border border-emerald-200 dark:border-emerald-800 text-xs sm:text-sm" title="Buka Dokumen Lain">
-                    <i class="fas fa-folder-open"></i>
-                    <span class="hidden md:inline">Buka File</span>
+                    <i class="fas fa-folder-open"></i> <span class="hidden md:inline">Buka File</span>
                 </button>
-
-                <!-- Tombol Pencarian Teks -->
                 <button onclick="toggleSearchModal(true)" class="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 px-2.5 sm:px-3 py-2 rounded-lg font-semibold transition flex items-center gap-1.5 border border-indigo-200 dark:border-indigo-800 text-xs sm:text-sm" title="Cari Teks dalam PDF">
-                    <i class="fas fa-search"></i>
-                    <span class="hidden md:inline">Cari Teks</span>
+                    <i class="fas fa-search"></i> <span class="hidden md:inline">Cari Teks</span>
                 </button>
-
-                <!-- Tombol Dark Mode -->
                 <button onclick="toggleDarkMode()" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-amber-400 hover:bg-slate-200 px-2.5 sm:px-3 py-2 rounded-lg font-semibold transition flex items-center gap-1.5 border border-slate-200 dark:border-slate-600 text-xs sm:text-sm" id="btn-dark-mode" title="Mode Malam / Terang">
                     <i class="fas fa-moon" id="dark-icon"></i>
                 </button>
-
-                <!-- Tombol Mode Anotasi -->
                 <button onclick="toggleEditMode()" class="bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 px-2.5 sm:px-3 py-2 rounded-lg font-semibold transition flex items-center gap-1.5 border border-blue-200 dark:border-blue-800 text-xs sm:text-sm" id="btn-edit-mode" title="Mode Coret/Anotasi">
-                    <i class="fas fa-pen-nib"></i>
-                    <span class="hidden md:inline">Anotasi</span>
+                    <i class="fas fa-pen-nib"></i> <span class="hidden md:inline">Anotasi</span>
                 </button>
-
-                <!-- Tombol Daftar Isi -->
                 <button onclick="toggleModal(true)" class="bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 hover:bg-amber-100 px-2.5 sm:px-3 py-2 rounded-lg font-semibold transition flex items-center gap-1.5 border border-amber-200 dark:border-amber-800 text-xs sm:text-sm" title="Daftar Isi">
-                    <i class="fas fa-list-ul"></i>
-                    <span class="hidden md:inline">Daftar Isi</span>
+                    <i class="fas fa-list-ul"></i> <span class="hidden md:inline">Daftar Isi</span>
                 </button>
             </div>
         </header>
 
-        <!-- Area Pembaca & Kanvas Coretan -->
         <div class="reader-wrapper" id="reader-container">
             <div id="canvas-wrapper">
                 <canvas id="pdf-canvas"></canvas>
@@ -348,21 +297,14 @@
         </div>
 
         <div class="controls z-10 relative">
-            <button id="prev-btn" class="btn-control" onclick="goPrev()">
-                <i class="fas fa-chevron-left"></i> <span class="hidden sm:inline">Sebelumnya</span>
-            </button>
-            
-            <div class="flex items-center gap-2 sm:gap-3 bg-slate-50 dark:bg-slate-900 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-semibold border border-slate-200 dark:border-slate-700 shadow-inner text-sm sm:text-base">
+            <button id="prev-btn" class="btn-control" onclick="goPrev()"><i class="fas fa-chevron-left"></i> <span class="hidden sm:inline">Sebelumnya</span></button>
+            <div class="flex items-center gap-2 sm:gap-3 bg-slate-50 dark:bg-slate-900 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-semibold border border-slate-200 dark:border-slate-700 shadow-inner text-sm sm:text-base relative">
                 <span class="opacity-75 hidden sm:inline">Hal</span>
                 <input type="number" id="page-input" class="w-12 sm:w-16 text-center border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-md p-1 focus:outline-none focus:border-amber-500 transition-colors" value="1" min="1">
                 <span class="opacity-75">/ <span id="total-pages">0</span></span>
-                <!-- Indikator Halaman Teranotasi -->
-                <span id="annotated-badge" class="hidden text-xs bg-amber-500 text-white font-bold px-1.5 py-0.5 rounded-full" title="Halaman ini sudah diberi coretan/catatan"><i class="fas fa-bookmark text-[10px]"></i></span>
+                <span id="annotated-badge" class="hidden absolute -top-2 -right-2 text-[10px] bg-amber-500 text-white font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-slate-800 shadow-sm" title="Halaman ini ada catatan/coretan"><i class="fas fa-star"></i></span>
             </div>
-
-            <button id="next-btn" class="btn-control" onclick="goNext()">
-                <span class="hidden sm:inline">Selanjutnya</span> <i class="fas fa-chevron-right"></i>
-            </button>
+            <button id="next-btn" class="btn-control" onclick="goNext()"><span class="hidden sm:inline">Selanjutnya</span> <i class="fas fa-chevron-right"></i></button>
         </div>
 
         <div class="edit-toolbar z-10 relative flex justify-center flex-wrap gap-2 mt-1 mb-1 hidden" id="edit-toolbar">
@@ -377,13 +319,12 @@
             <button onclick="clearCanvas()" class="btn-tool hover:text-red-600"><i class="fas fa-trash"></i> Bersihkan</button>
             <button onclick="exportEditedPdf()" class="btn-tool bg-amber-600 text-white font-bold border-amber-700 hover:bg-amber-700 shadow-md"><i class="fas fa-file-export"></i> Simpan PDF</button>
         </div>
-
         <div class="text-center mt-1 pb-1 text-[9px] sm:text-[10px] opacity-60 font-medium tracking-wide shrink-0">
-            &copy; 2026 RBA (Rumah Bahasa Arab) OmniReader Pro&trade; oleh M. Nur Muslim
+            &copy; 2026 RBA OmniReader Pro&trade; oleh M. Nur Muslim
         </div>
     </div>
 
-    <!-- Modal Daftar Isi Dinamis -->
+    <!-- Modal Daftar Isi -->
     <div class="modal" id="toc-modal">
         <div class="modal-content">
             <div class="flex justify-between items-center mb-4 border-b pb-4 border-slate-100 dark:border-slate-700 shrink-0">
@@ -391,15 +332,10 @@
                     <i class="fas fa-bookmark text-amber-600 text-xl sm:text-2xl"></i>
                     <h2 class="text-xl sm:text-2xl font-bold" style="font-family: 'Playfair Display', serif;">Daftar Isi</h2>
                 </div>
-                <button onclick="toggleModal(false)" class="opacity-60 hover:text-red-500 transition-colors text-lg sm:text-xl bg-slate-100 dark:bg-slate-700 rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center">
-                    <i class="fas fa-times"></i>
-                </button>
+                <button onclick="toggleModal(false)" class="opacity-60 hover:text-red-500 transition-colors text-lg sm:text-xl bg-slate-100 dark:bg-slate-700 rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center"><i class="fas fa-times"></i></button>
             </div>
             <div id="toc-container" class="toc-list">
-                <div class="p-8 text-center opacity-60">
-                    <i class="fas fa-file-pdf text-3xl sm:text-4xl mb-4 opacity-50 block"></i>
-                    Silakan unggah dokumen PDF terlebih dahulu.
-                </div>
+                <div class="p-8 text-center opacity-60"><i class="fas fa-file-pdf text-3xl sm:text-4xl mb-4 opacity-50 block"></i> Silakan unggah dokumen PDF terlebih dahulu.</div>
             </div>
         </div>
     </div>
@@ -410,22 +346,16 @@
             <div class="flex justify-between items-center mb-4 border-b pb-4 border-slate-100 dark:border-slate-700 shrink-0">
                 <div class="flex items-center gap-3">
                     <i class="fas fa-search text-indigo-600 text-xl sm:text-2xl"></i>
-                    <h2 class="text-xl sm:text-2xl font-bold" style="font-family: 'Playfair Display', serif;">Cari Kata dalam PDF</h2>
+                    <h2 class="text-xl sm:text-2xl font-bold" style="font-family: 'Playfair Display', serif;">Cari Teks dalam PDF</h2>
                 </div>
-                <button onclick="toggleSearchModal(false)" class="opacity-60 hover:text-red-500 transition-colors text-lg sm:text-xl bg-slate-100 dark:bg-slate-700 rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center">
-                    <i class="fas fa-times"></i>
-                </button>
+                <button onclick="toggleSearchModal(false)" class="opacity-60 hover:text-red-500 transition-colors text-lg sm:text-xl bg-slate-100 dark:bg-slate-700 rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center"><i class="fas fa-times"></i></button>
             </div>
             <div class="flex gap-2 mb-4 shrink-0">
                 <input type="text" id="search-query-input" placeholder="Ketik kata yang dicari..." class="flex-1 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
-                <button onclick="executeTextSearch()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2 rounded-lg text-sm transition flex items-center gap-2">
-                    <i class="fas fa-search"></i> Cari
-                </button>
+                <button onclick="executeTextSearch()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2 rounded-lg text-sm transition flex items-center gap-2"><i class="fas fa-search"></i> Cari</button>
             </div>
             <div id="search-results-container" class="toc-list">
-                <div class="p-6 text-center opacity-60 text-sm">
-                    Masukkan kata kunci untuk mencari di seluruh halaman dokumen.
-                </div>
+                <div class="p-6 text-center opacity-60 text-sm">Masukkan kata kunci untuk mencari di seluruh halaman dokumen.</div>
             </div>
         </div>
     </div>
@@ -433,7 +363,6 @@
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-        // State Aplikasi
         let pdfDoc = null;
         let originalPdfBytes = null; 
         let pageNum = 1;
@@ -452,7 +381,6 @@
         const loadingSpinnerWrapper = document.getElementById('loading-spinner-wrapper');
         const loadingText = document.getElementById('loading-text');
 
-        // State Anotasi, Undo & Redo History
         const drawCanvas = document.getElementById('drawing-canvas');
         const drawCtx = drawCanvas.getContext('2d');
         let isDrawingMode = false;
@@ -463,19 +391,12 @@
         let undoHistory = {}; 
         let redoHistory = {}; 
 
-        // --- SISTEM DARK MODE ---
         function toggleDarkMode() {
             document.body.classList.toggle('dark-mode');
             const isDark = document.body.classList.contains('dark-mode');
-            const icon = document.getElementById('dark-icon');
-            if (isDark) {
-                icon.className = 'fas fa-sun';
-            } else {
-                icon.className = 'fas fa-moon';
-            }
+            document.getElementById('dark-icon').className = isDark ? 'fas fa-sun' : 'fas fa-moon';
         }
 
-        // --- SISTEM RENDER PDF FIT-TO-SCREEN ---
         function renderPage(num) {
             if (!pdfDoc) return; 
             
@@ -488,14 +409,12 @@
                 const containerHeight = container.clientHeight - 20;
 
                 const unscaledViewport = page.getViewport({ scale: 1.0 });
-
                 const scaleX = containerWidth / unscaledViewport.width;
                 const scaleY = containerHeight / unscaledViewport.height;
                 const fitScale = Math.min(scaleX, scaleY); 
 
                 const pixelRatio = window.devicePixelRatio || 1;
                 const highResScale = fitScale * pixelRatio * 1.5;
-
                 const viewport = page.getViewport({ scale: highResScale });
 
                 canvas.width = viewport.width;
@@ -518,8 +437,8 @@
                     
                     drawCanvas.width = canvas.width;
                     drawCanvas.height = canvas.height;
-                    
                     drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+                    
                     if (pageDrawings[num]) {
                         const img = new Image();
                         img.onload = () => { drawCtx.drawImage(img, 0, 0); };
@@ -527,12 +446,8 @@
                     }
                     isCanvasDirty = false;
 
-                    // Perbarui Indikator Halaman Teranotasi
-                    if (pageDrawings[num] && pageDrawings[num] !== '') {
-                        annotatedBadge.classList.remove('hidden');
-                    } else {
-                        annotatedBadge.classList.add('hidden');
-                    }
+                    if (pageDrawings[num] && pageDrawings[num] !== '') { annotatedBadge.classList.remove('hidden'); } 
+                    else { annotatedBadge.classList.add('hidden'); }
 
                     if (pageNumPending !== null) {
                         renderPage(pageNumPending);
@@ -550,11 +465,7 @@
         window.addEventListener('resize', () => {
             if (!pdfDoc) return;
             clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(() => {
-                if (!isDrawingMode) {
-                    renderPage(pageNum);
-                }
-            }, 250);
+            resizeTimer = setTimeout(() => { if (!isDrawingMode) renderPage(pageNum); }, 250);
         });
 
         function queueRenderPage(num) {
@@ -580,7 +491,6 @@
             else { e.target.value = pageNum; }
         });
 
-        // --- SISTEM DAFTAR ISI ---
         async function buildDynamicTOC() {
             const container = document.getElementById('toc-container');
             container.innerHTML = '<div class="text-center p-8 opacity-60 animate-pulse"><i class="fas fa-search mb-2 text-2xl block"></i> Memindai daftar isi otomatis...</div>';
@@ -594,7 +504,7 @@
                         <div class="p-8 text-center opacity-70">
                             <i class="fas fa-info-circle text-3xl sm:text-4xl mb-4 opacity-50 block"></i>
                             <p class="font-semibold text-base sm:text-lg">Tidak Ada Metadata Daftar Isi</p>
-                            <p class="text-xs sm:text-sm mt-2">Buku ini tidak menyimpan data struktur bab (Bookmarks). Silakan gunakan navigasi manual atau fitur Pencarian Teks.</p>
+                            <p class="text-xs sm:text-sm mt-2">Buku ini tidak menyimpan data struktur bab. Silakan gunakan navigasi manual atau Pencarian Teks.</p>
                         </div>
                     `;
                     return;
@@ -608,53 +518,35 @@
                         div.style.marginLeft = `${level * 15}px`;
                         div.style.borderLeft = "2px solid var(--border-color)";
                     }
-
                     div.innerHTML = `<span class="truncate pr-2">${item.title}</span> <i class="fas fa-angle-right text-xs opacity-50"></i>`;
-
                     div.onclick = async () => {
                         toggleModal(false); 
                         let dest = item.dest;
                         if (typeof dest === 'string') { dest = await pdfDoc.getDestination(dest); }
-                        
                         if (Array.isArray(dest)) {
                             const ref = dest[0];
                             try {
-                                let pageIndex;
-                                if (typeof ref === 'object' && ref !== null) { 
-                                    pageIndex = await pdfDoc.getPageIndex(ref); 
-                                } else if (Number.isInteger(ref)) { 
-                                    pageIndex = ref; 
-                                } else { 
-                                    return; 
-                                }
-                                changePage(pageIndex + 1);
-                            } catch (e) { console.warn("Lompatan halaman gagal", e); }
+                                let pageIndex = (typeof ref === 'object' && ref !== null) ? await pdfDoc.getPageIndex(ref) : (Number.isInteger(ref) ? ref : null);
+                                if(pageIndex !== null) changePage(pageIndex + 1);
+                            } catch (e) {}
                         }
                     };
                     container.appendChild(div);
-
-                    if (item.items && item.items.length > 0) {
-                        for (let subItem of item.items) { await renderOutlineItem(subItem, level + 1); }
-                    }
+                    if (item.items && item.items.length > 0) { for (let subItem of item.items) { await renderOutlineItem(subItem, level + 1); } }
                 };
-
                 for (let item of outline) { await renderOutlineItem(item); }
-
             } catch (e) {
                 container.innerHTML = '<div class="p-4 text-center text-red-500 font-semibold text-sm"><i class="fas fa-exclamation-triangle"></i> Gagal mengekstrak daftar isi.</div>';
             }
         }
 
-        // --- SISTEM PENCARIAN TEKS DALAM PDF ---
         function toggleSearchModal(show) {
             const modal = document.getElementById('search-modal');
             if (show) {
                 if (!pdfDoc) { alert("Silakan buka file PDF terlebih dahulu."); return; }
                 modal.classList.add('active');
                 document.getElementById('search-query-input').focus();
-            } else {
-                modal.classList.remove('active');
-            }
+            } else { modal.classList.remove('active'); }
         }
 
         async function executeTextSearch() {
@@ -685,12 +577,8 @@
                         `;
                     }
                 }
-
-                if (matchesFound === 0) {
-                    container.innerHTML = `<div class="p-6 text-center opacity-60 text-sm">Kata kunci "<strong>${query}</strong>" tidak ditemukan dalam dokumen ini.</div>`;
-                } else {
-                    container.innerHTML = `<div class="p-2 text-xs opacity-60 mb-2">Ditemukan pada ${matchesFound} halaman:</div>` + resultsHtml;
-                }
+                if (matchesFound === 0) { container.innerHTML = `<div class="p-6 text-center opacity-60 text-sm">Kata kunci "<strong>${query}</strong>" tidak ditemukan.</div>`; } 
+                else { container.innerHTML = `<div class="p-2 text-xs opacity-60 mb-2">Ditemukan pada ${matchesFound} halaman:</div>` + resultsHtml; }
             } catch (e) {
                 container.innerHTML = '<div class="p-6 text-center text-red-500 text-sm">Terjadi kesalahan saat memindai teks.</div>';
             }
@@ -701,20 +589,12 @@
             changePage(pageNumTarget);
         }
 
-        // --- SISTEM UPLOAD PDF ---
         document.getElementById('welcome-file-upload').addEventListener('change', handleFileUpload);
         
         function handleFileUpload(e) {
             const file = e.target.files[0];
-            if(!file || file.type !== 'application/pdf') {
-                alert('Harap pilih dokumen berformat PDF.');
-                e.target.value = ''; 
-                return;
-            }
-
-            if (isDrawingMode) {
-                toggleEditMode();
-            }
+            if(!file || file.type !== 'application/pdf') { alert('Harap pilih dokumen PDF.'); e.target.value = ''; return; }
+            if (isDrawingMode) { toggleEditMode(); }
 
             loadingContent.classList.add('hidden');
             loadingSpinnerWrapper.classList.remove('hidden');
@@ -726,7 +606,6 @@
             const fileReader = new FileReader();
             fileReader.onload = function() {
                 originalPdfBytes = new Uint8Array(this.result); 
-                
                 const loadingTask = pdfjsLib.getDocument({ data: originalPdfBytes });
                 loadingTask.promise.then(pdf => {
                     pdfDoc = pdf;
@@ -739,10 +618,9 @@
                     
                     buildDynamicTOC();
                     renderPage(pageNum); 
-                    
                     setTimeout(() => { loadingScreen.style.display = 'none'; }, 500);
                 }).catch(err => {
-                    loadingSpinnerWrapper.innerHTML = `<div class="text-red-600 bg-red-50 p-6 rounded-xl border border-red-200 mt-4 text-center mx-4"><i class="fas fa-times-circle text-3xl sm:text-4xl mb-3"></i><h4 class="font-bold text-base sm:text-lg mb-2">Gagal Memproses File</h4><p class="text-xs sm:text-sm mb-4">File PDF rusak atau dilindungi sandi.</p><button onclick="location.reload()" class="bg-slate-800 text-white px-6 py-2 rounded-lg font-bold w-full text-sm">Kembali</button></div>`;
+                    loadingSpinnerWrapper.innerHTML = `<div class="text-red-600 bg-red-50 p-6 rounded-xl mt-4 text-center mx-4"><i class="fas fa-times-circle text-4xl mb-3"></i><h4 class="font-bold">Gagal Memproses File</h4><p class="text-sm mb-4">File rusak/dilindungi sandi.</p><button onclick="location.reload()" class="bg-slate-800 text-white px-6 py-2 rounded-lg font-bold w-full text-sm">Kembali</button></div>`;
                 });
             };
             fileReader.readAsArrayBuffer(file);
@@ -755,12 +633,8 @@
             else modal.classList.remove('active');
         }
 
-        document.getElementById('toc-modal').addEventListener('click', (e) => {
-            if (e.target === document.getElementById('toc-modal')) toggleModal(false);
-        });
-        document.getElementById('search-modal').addEventListener('click', (e) => {
-            if (e.target === document.getElementById('search-modal')) toggleSearchModal(false);
-        });
+        document.getElementById('toc-modal').addEventListener('click', (e) => { if (e.target === document.getElementById('toc-modal')) toggleModal(false); });
+        document.getElementById('search-modal').addEventListener('click', (e) => { if (e.target === document.getElementById('search-modal')) toggleSearchModal(false); });
 
         document.addEventListener('keydown', (e) => {
             if (!pdfDoc || document.getElementById('toc-modal').classList.contains('active') || document.getElementById('search-modal').classList.contains('active')) return;
@@ -769,11 +643,7 @@
         });
 
         let touchStartX = 0;
-        document.getElementById('reader-container').addEventListener('touchstart', e => {
-            if (!pdfDoc || isDrawingMode) return; 
-            touchStartX = e.changedTouches[0].screenX;
-        }, {passive: true});
-
+        document.getElementById('reader-container').addEventListener('touchstart', e => { if (!pdfDoc || isDrawingMode) return; touchStartX = e.changedTouches[0].screenX; }, {passive: true});
         document.getElementById('reader-container').addEventListener('touchend', e => {
             if (!pdfDoc || isDrawingMode) return; 
             const touchEndX = e.changedTouches[0].screenX;
@@ -781,69 +651,52 @@
             else if (touchEndX - touchStartX > 60) goPrev(); 
         }, {passive: true});
 
-        // --- SISTEM ANOTASI, UNDO & REDO ---
         function saveStateForUndo() {
             if (!pdfDoc) return;
-            if (!undoHistory[pageNum]) {
-                undoHistory[pageNum] = [];
-            }
-            const currentDataUrl = drawCanvas.toDataURL('image/png');
-            undoHistory[pageNum].push(currentDataUrl);
-            if (undoHistory[pageNum].length > 20) {
-                undoHistory[pageNum].shift();
-            }
+            if (!undoHistory[pageNum]) undoHistory[pageNum] = [];
+            undoHistory[pageNum].push(drawCanvas.toDataURL('image/png'));
+            if (undoHistory[pageNum].length > 20) undoHistory[pageNum].shift();
             redoHistory[pageNum] = [];
         }
 
         function undoCanvas() {
             if (!pdfDoc || !undoHistory[pageNum] || undoHistory[pageNum].length === 0) return;
-            
             if (!redoHistory[pageNum]) redoHistory[pageNum] = [];
             redoHistory[pageNum].push(drawCanvas.toDataURL('image/png'));
-
             const previousStateUrl = undoHistory[pageNum].pop();
+            
             const img = new Image();
             img.onload = () => {
                 drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
                 drawCtx.drawImage(img, 0, 0);
                 pageDrawings[pageNum] = previousStateUrl;
                 isCanvasDirty = true;
-                
-                if (previousStateUrl && previousStateUrl !== '') {
-                    annotatedBadge.classList.remove('hidden');
-                } else {
-                    annotatedBadge.classList.add('hidden');
-                }
+                if (previousStateUrl && previousStateUrl !== '') { annotatedBadge.classList.remove('hidden'); } 
+                else { annotatedBadge.classList.add('hidden'); }
             };
             img.src = previousStateUrl;
         }
 
         function redoCanvas() {
             if (!pdfDoc || !redoHistory[pageNum] || redoHistory[pageNum].length === 0) return;
-            
             if (!undoHistory[pageNum]) undoHistory[pageNum] = [];
             undoHistory[pageNum].push(drawCanvas.toDataURL('image/png'));
-
             const nextStateUrl = redoHistory[pageNum].pop();
+            
             const img = new Image();
             img.onload = () => {
                 drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
                 drawCtx.drawImage(img, 0, 0);
                 pageDrawings[pageNum] = nextStateUrl;
                 isCanvasDirty = true;
-
-                if (nextStateUrl && nextStateUrl !== '') {
-                    annotatedBadge.classList.remove('hidden');
-                } else {
-                    annotatedBadge.classList.add('hidden');
-                }
+                if (nextStateUrl && nextStateUrl !== '') { annotatedBadge.classList.remove('hidden'); } 
+                else { annotatedBadge.classList.add('hidden'); }
             };
             img.src = nextStateUrl;
         }
 
         function toggleEditMode() {
             if (!pdfDoc) return; 
-            
             isDrawingMode = !isDrawingMode;
             const btn = document.getElementById('btn-edit-mode');
             const toolbar = document.getElementById('edit-toolbar');
@@ -872,9 +725,7 @@
         function getMousePos(e) {
             const rect = drawCanvas.getBoundingClientRect();
             let clientX = e.clientX, clientY = e.clientY;
-            if (e.touches && e.touches.length > 0) {
-                clientX = e.touches[0].clientX; clientY = e.touches[0].clientY;
-            }
+            if (e.touches && e.touches.length > 0) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; }
             const scaleX = drawCanvas.width / rect.width;
             const scaleY = drawCanvas.height / rect.height;
             return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
@@ -891,16 +742,12 @@
                 const rect = drawCanvas.getBoundingClientRect();
                 let cssX = e.clientX - rect.left;
                 let cssY = e.clientY - rect.top;
-                if (e.touches && e.touches.length > 0) {
-                    cssX = e.touches[0].clientX - rect.left;
-                    cssY = e.touches[0].clientY - rect.top;
-                }
+                if (e.touches && e.touches.length > 0) { cssX = e.touches[0].clientX - rect.left; cssY = e.touches[0].clientY - rect.top; }
                 createTextInput(pos.x, pos.y, cssX, cssY);
                 return; 
             }
             
             saveStateForUndo();
-
             isDrawing = true;
             isCanvasDirty = true;
             drawCtx.beginPath();
@@ -909,25 +756,21 @@
             if (currentTool === 'pen') {
                 drawCtx.strokeStyle = '#dc2626'; 
                 drawCtx.lineWidth = Math.max(3, drawCanvas.width / 400); 
-                drawCtx.lineCap = 'round';
-                drawCtx.lineJoin = 'round';
+                drawCtx.lineCap = 'round'; drawCtx.lineJoin = 'round';
                 drawCtx.globalCompositeOperation = 'source-over';
             } else if (currentTool === 'highlight') {
                 drawCtx.strokeStyle = 'rgba(234, 179, 8, 0.4)'; 
                 drawCtx.lineWidth = Math.max(15, drawCanvas.width / 60);
-                drawCtx.lineCap = 'butt';
-                drawCtx.lineJoin = 'round';
+                drawCtx.lineCap = 'butt'; drawCtx.lineJoin = 'round';
                 drawCtx.globalCompositeOperation = 'source-over';
             } else if (currentTool === 'whiteout') { 
                 drawCtx.strokeStyle = document.body.classList.contains('dark-mode') ? '#1e293b' : 'white'; 
                 drawCtx.lineWidth = Math.max(25, drawCanvas.width / 40);
-                drawCtx.lineCap = 'round';
-                drawCtx.lineJoin = 'round';
+                drawCtx.lineCap = 'round'; drawCtx.lineJoin = 'round';
                 drawCtx.globalCompositeOperation = 'source-over';
             } else if (currentTool === 'eraser') {
                 drawCtx.lineWidth = Math.max(25, drawCanvas.width / 30);
-                drawCtx.lineCap = 'round';
-                drawCtx.lineJoin = 'round';
+                drawCtx.lineCap = 'round'; drawCtx.lineJoin = 'round';
                 drawCtx.globalCompositeOperation = 'destination-out'; 
             }
         }
@@ -951,13 +794,11 @@
         drawCanvas.addEventListener('mousemove', drawLine);
         drawCanvas.addEventListener('mouseup', stopDrawing);
         drawCanvas.addEventListener('mouseout', stopDrawing);
-
         drawCanvas.addEventListener('touchstart', startDrawing, {passive: false});
         drawCanvas.addEventListener('touchmove', drawLine, {passive: false});
         drawCanvas.addEventListener('touchend', stopDrawing);
         drawCanvas.addEventListener('touchcancel', stopDrawing);
 
-        // --- SISTEM INPUT TEKS DINAMIS & DRAGGABLE WIDGET ---
         function createTextInput(initialCanvasX, initialCanvasY, cssX, cssY) {
             const existing = document.getElementById('dynamic-text-input-container');
             if (existing && existing.parentNode) { existing.remove(); }
@@ -1027,59 +868,22 @@
             bottomRow.style.paddingTop = '8px';
 
             const fontSelect = document.createElement('select');
-            fontSelect.innerHTML = `
-                <option value="'Inter', sans-serif">Inter</option>
-                <option value="'Arial', sans-serif">Arial</option>
-                <option value="'Times New Roman', serif">Times New Roman</option>
-                <option value="'Courier New', monospace">Courier</option>
-            `;
-            fontSelect.style.fontSize = '12px';
-            fontSelect.style.padding = '2px 4px';
-            fontSelect.style.borderRadius = '4px';
-            fontSelect.style.border = '1px solid #cbd5e1';
-            fontSelect.style.outline = 'none';
+            fontSelect.innerHTML = `<option value="'Inter', sans-serif">Inter</option><option value="'Arial', sans-serif">Arial</option><option value="'Times New Roman', serif">Times New Roman</option><option value="'Courier New', monospace">Courier</option>`;
+            fontSelect.style.fontSize = '12px'; fontSelect.style.padding = '2px 4px'; fontSelect.style.borderRadius = '4px'; fontSelect.style.border = '1px solid #cbd5e1'; fontSelect.style.outline = 'none';
 
             const sizeSelect = document.createElement('select');
-            sizeSelect.innerHTML = `
-                <option value="12">12 px</option>
-                <option value="14">14 px</option>
-                <option value="16" selected>16 px</option>
-                <option value="20">20 px</option>
-                <option value="24">24 px</option>
-                <option value="32">32 px</option>
-                <option value="48">48 px</option>
-            `;
-            sizeSelect.style.fontSize = '12px';
-            sizeSelect.style.padding = '2px 4px';
-            sizeSelect.style.borderRadius = '4px';
-            sizeSelect.style.border = '1px solid #cbd5e1';
-            sizeSelect.style.outline = 'none';
+            sizeSelect.innerHTML = `<option value="12">12 px</option><option value="14">14 px</option><option value="16" selected>16 px</option><option value="20">20 px</option><option value="24">24 px</option><option value="32">32 px</option><option value="48">48 px</option>`;
+            sizeSelect.style.fontSize = '12px'; sizeSelect.style.padding = '2px 4px'; sizeSelect.style.borderRadius = '4px'; sizeSelect.style.border = '1px solid #cbd5e1'; sizeSelect.style.outline = 'none';
 
             const colorPicker = document.createElement('input');
-            colorPicker.type = 'color';
-            colorPicker.value = '#0f172a';
-            colorPicker.style.width = '24px';
-            colorPicker.style.height = '24px';
-            colorPicker.style.border = 'none';
-            colorPicker.style.padding = '0';
-            colorPicker.style.cursor = 'pointer';
-            colorPicker.style.background = 'transparent';
+            colorPicker.type = 'color'; colorPicker.value = '#0f172a';
+            colorPicker.style.width = '24px'; colorPicker.style.height = '24px'; colorPicker.style.border = 'none'; colorPicker.style.padding = '0'; colorPicker.style.cursor = 'pointer'; colorPicker.style.background = 'transparent';
 
-            const updateStyles = () => {
-                input.style.fontFamily = fontSelect.value;
-                input.style.fontSize = sizeSelect.value + 'px';
-                input.style.color = colorPicker.value;
-            };
-            fontSelect.addEventListener('change', updateStyles);
-            sizeSelect.addEventListener('change', updateStyles);
-            colorPicker.addEventListener('input', updateStyles);
+            const updateStyles = () => { input.style.fontFamily = fontSelect.value; input.style.fontSize = sizeSelect.value + 'px'; input.style.color = colorPicker.value; };
+            fontSelect.addEventListener('change', updateStyles); sizeSelect.addEventListener('change', updateStyles); colorPicker.addEventListener('input', updateStyles);
 
-            bottomRow.appendChild(fontSelect);
-            bottomRow.appendChild(sizeSelect);
-            bottomRow.appendChild(colorPicker);
-
-            container.appendChild(topRow);
-            container.appendChild(bottomRow);
+            bottomRow.appendChild(fontSelect); bottomRow.appendChild(sizeSelect); bottomRow.appendChild(colorPicker);
+            container.appendChild(topRow); container.appendChild(bottomRow);
             document.getElementById('canvas-wrapper').appendChild(container);
 
             input.focus();
@@ -1091,8 +895,7 @@
                 isDraggingText = true;
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                startX = clientX;
-                startY = clientY;
+                startX = clientX; startY = clientY;
                 initialLeft = parseInt(container.style.left, 10) || 0;
                 initialTop = parseInt(container.style.top, 10) || 0;
                 if (e.cancelable) e.preventDefault();
@@ -1102,24 +905,15 @@
                 if (!isDraggingText) return;
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                const dx = clientX - startX;
-                const dy = clientY - startY;
-                container.style.left = (initialLeft + dx) + 'px';
-                container.style.top = (initialTop + dy) + 'px';
+                container.style.left = (initialLeft + (clientX - startX)) + 'px';
+                container.style.top = (initialTop + (clientY - startY)) + 'px';
                 if (e.cancelable) e.preventDefault(); 
             };
 
-            const onDragEnd = () => {
-                isDraggingText = false;
-            };
+            const onDragEnd = () => { isDraggingText = false; };
 
-            dragHandle.addEventListener('mousedown', onDragStart);
-            document.addEventListener('mousemove', onDragMove);
-            document.addEventListener('mouseup', onDragEnd);
-
-            dragHandle.addEventListener('touchstart', onDragStart, {passive: false});
-            document.addEventListener('touchmove', onDragMove, {passive: false});
-            document.addEventListener('touchend', onDragEnd);
+            dragHandle.addEventListener('mousedown', onDragStart); document.addEventListener('mousemove', onDragMove); document.addEventListener('mouseup', onDragEnd);
+            dragHandle.addEventListener('touchstart', onDragStart, {passive: false}); document.addEventListener('touchmove', onDragMove, {passive: false}); document.addEventListener('touchend', onDragEnd);
 
             let isSaved = false; 
             const saveText = () => { 
@@ -1128,61 +922,37 @@
 
                 const rect = drawCanvas.getBoundingClientRect();
                 const inputRect = input.getBoundingClientRect();
-                
                 let finalCssX = inputRect.left - rect.left;
                 let finalCssY = (inputRect.top - rect.top) + (inputRect.height / 2);
 
                 const scaleX = drawCanvas.width / rect.width;
                 const scaleY = drawCanvas.height / rect.height;
 
-                const finalCanvasX = finalCssX * scaleX;
-                const finalCanvasY = finalCssY * scaleY;
-
-                const selectedFont = fontSelect.value;
-                const selectedSize = sizeSelect.value;
-                const selectedColor = colorPicker.value;
-
-                finalizeText(input.value, finalCanvasX, finalCanvasY, selectedFont, selectedSize, selectedColor, scaleY, container); 
+                finalizeText(input.value, finalCssX * scaleX, finalCssY * scaleY, fontSelect.value, sizeSelect.value, colorPicker.value, scaleY, container); 
                 
-                document.removeEventListener('mousemove', onDragMove);
-                document.removeEventListener('mouseup', onDragEnd);
-                document.removeEventListener('touchmove', onDragMove);
-                document.removeEventListener('touchend', onDragEnd);
+                document.removeEventListener('mousemove', onDragMove); document.removeEventListener('mouseup', onDragEnd);
+                document.removeEventListener('touchmove', onDragMove); document.removeEventListener('touchend', onDragEnd);
             };
             
             saveBtn.addEventListener('click', saveText);
-            input.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    saveText();
-                }
-            });
+            input.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); saveText(); } });
         }
 
         function finalizeText(text, x, y, fontFam, fontSz, color, scaleY, containerEl) {
             if (text && text.trim() !== '') {
                 saveStateForUndo();
-
-                const finalFontSize = parseFloat(fontSz) * scaleY;
-                
-                drawCtx.font = `bold ${finalFontSize}px ${fontFam}`;
-                drawCtx.fillStyle = color;
-                drawCtx.textBaseline = "middle";
-                drawCtx.globalCompositeOperation = 'source-over';
+                drawCtx.font = `bold ${parseFloat(fontSz) * scaleY}px ${fontFam}`;
+                drawCtx.fillStyle = color; drawCtx.textBaseline = "middle"; drawCtx.globalCompositeOperation = 'source-over';
                 drawCtx.fillText(text.trim(), x, y);
-                
                 isCanvasDirty = true;
                 saveCurrentDrawing();
             }
-            if (containerEl && containerEl.parentNode) {
-                containerEl.parentNode.removeChild(containerEl);
-            }
+            if (containerEl && containerEl.parentNode) { containerEl.parentNode.removeChild(containerEl); }
         }
 
         function clearCanvas() {
             if(!pdfDoc) return;
             saveStateForUndo(); 
-            
             drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
             pageDrawings[pageNum] = null; 
             isCanvasDirty = false;
@@ -1201,16 +971,14 @@
             }
         }
 
-        // --- SISTEM PENGGABUNGAN & EXPORT PDF (PDF-LIB) ---
         async function exportEditedPdf() {
             if (!originalPdfBytes || !pdfDoc) return;
-            
             saveCurrentDrawing(); 
             
             loadingScreen.style.display = 'flex';
             loadingContent.classList.add('hidden');
             loadingSpinnerWrapper.classList.remove('hidden');
-            loadingText.innerText = `Menyatukan coretan & membuat PDF baru...`;
+            loadingText.innerText = `Menyatukan coretan & merender PDF (Presisi Tinggi)...`;
             
             try {
                 const { PDFDocument } = PDFLib;
@@ -1218,9 +986,11 @@
                 const pages = pdfDocToSave.getPages();
                 
                 for (let i = 1; i <= pages.length; i++) {
-                    if (pageDrawings[i]) {
+                    if (pageDrawings[i] && pageDrawings[i] !== '') {
                         const img = await pdfDocToSave.embedPng(pageDrawings[i]);
                         const page = pages[i - 1];
+                        
+                        // Kunci Presisi: Gambar kanvas disesuaikan paksa dengan dimensi asli halaman PDF
                         const { width, height } = page.getSize();
                         page.drawImage(img, {
                             x: 0,
