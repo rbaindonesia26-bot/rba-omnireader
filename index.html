@@ -22,6 +22,19 @@
             --accent-gold: #d97706;
             --accent-blue: #0f172a;
             --reader-bg: #cbd5e1;
+            --panel-bg: #ffffff;
+            --border-color: #e2e8f0;
+        }
+
+        body.dark-mode {
+            --bg-color: #0f172a;
+            --text-main: #f8fafc;
+            --accent-gold: #fbbf24;
+            --accent-blue: #38bdf8;
+            --reader-bg: #1e293b;
+            --panel-bg: #1e293b;
+            --border-color: #334155;
+            background-image: radial-gradient(#334155 1px, transparent 1px);
         }
 
         body {
@@ -36,6 +49,7 @@
             margin: 0;
             height: 100vh;
             height: 100dvh; 
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .main-container {
@@ -63,6 +77,7 @@
             border-radius: 12px;
             box-shadow: inset 0 4px 6px -1px rgba(0, 0, 0, 0.1), inset 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             overflow: hidden;
+            transition: background-color 0.3s ease;
         }
 
         #canvas-wrapper {
@@ -84,12 +99,15 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: white;
+            background: var(--panel-bg);
+            color: var(--text-main);
             padding: 10px 15px;
             border-radius: 15px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             margin-bottom: 5px;
             flex-shrink: 0;
+            border: 1px solid var(--border-color);
+            transition: background 0.3s ease, border-color 0.3s ease;
         }
 
         .btn-control {
@@ -111,7 +129,7 @@
         }
 
         .btn-control:hover:not(:disabled) {
-            background: #1e293b;
+            opacity: 0.9;
             transform: translateY(-2px);
             box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.3);
         }
@@ -128,9 +146,9 @@
         }
         
         .btn-tool {
-            background: white;
-            color: #475569;
-            border: 1px solid #cbd5e1;
+            background: var(--panel-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
             padding: 6px 10px;
             border-radius: 8px;
             font-size: 0.8rem;
@@ -141,11 +159,11 @@
             align-items: center;
             gap: 6px;
         }
-        .btn-tool:hover { background: #f1f5f9; }
+        .btn-tool:hover { opacity: 0.8; background: rgba(0,0,0,0.05); }
         .btn-tool.active-tool {
-            background: #e2e8f0;
-            border-color: #94a3b8;
-            color: #0f172a;
+            background: var(--accent-gold);
+            border-color: var(--accent-gold);
+            color: white;
         }
 
         .modal {
@@ -162,7 +180,8 @@
         .modal.active { display: flex; }
 
         .modal-content {
-            background: white;
+            background: var(--panel-bg);
+            color: var(--text-main);
             width: 95%;
             max-width: 600px;
             height: 85vh;
@@ -171,6 +190,7 @@
             display: flex;
             flex-direction: column;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border-color);
         }
 
         .toc-list {
@@ -181,14 +201,14 @@
 
         .toc-item {
             padding: 12px 10px;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid var(--border-color);
             cursor: pointer;
             transition: all 0.2s;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-size: 0.9rem;
-            color: #334155;
+            color: var(--text-main);
         }
 
         @media (min-width: 640px) {
@@ -196,8 +216,7 @@
         }
 
         .toc-item:hover {
-            background: #f8fafc;
-            color: var(--accent-gold);
+            opacity: 0.85;
             padding-left: 15px;
             border-left: 4px solid var(--accent-gold);
         }
@@ -205,7 +224,7 @@
         .toc-chapter {
             font-weight: 700;
             color: var(--accent-blue);
-            background: #f1f5f9;
+            background: rgba(0,0,0,0.03);
             border-radius: 6px;
             margin-top: 12px;
             font-family: 'Playfair Display', serif;
@@ -235,22 +254,21 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; border-radius: 8px; }
         ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 8px; }
         ::-webkit-scrollbar-thumb:hover { background: #64748b; }
     </style>
 </head>
 <body>
 
-    <!-- Layar Awal (Welcome / Upload / Loading) -->
     <div id="loading-screen">
         <div id="loading-content" class="w-full max-w-lg px-4 py-8 flex flex-col items-center text-center">
             <a href="https://ibb.co.com/0VXNWm8v" target="_blank" class="mb-4 sm:mb-6 hover:scale-105 transition-transform duration-300 shrink-0">
                 <img src="https://i.ibb.co.com/tPhfNQkF/Chat-GPT-Image-Jul-31-2026-05-59-44-PM.png" alt="RBA Logo" class="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-2xl shadow-xl border-4 border-white">
             </a>
-            <h1 class="text-3xl sm:text-4xl font-bold mb-1 text-slate-900" style="font-family: 'Playfair Display', serif;">RBA OmniReader Pro&trade;</h1>
+            <h1 class="text-3xl sm:text-4xl font-bold mb-1" style="font-family: 'Playfair Display', serif;">RBA OmniReader Pro&trade;</h1>
             <p class="text-xs sm:text-sm font-bold text-amber-600 tracking-widest uppercase mb-3 sm:mb-4">Master PDF Generator</p>
-            <p class="text-sm sm:text-base text-slate-500 mb-6 leading-relaxed">Platform pembaca PDF interaktif. Unggah dokumen apa saja, tambahkan coretan, dan nikmati pengalaman membaca tingkat lanjut.</p>
+            <p class="text-sm sm:text-base opacity-75 mb-6 leading-relaxed">Platform pembaca PDF interaktif. Dilengkapi fitur anotasi, Tipe-X, ketik teks, mode malam, pencarian kata, dan indikator coretan halaman!</p>
             
             <label class="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-3 shadow-lg hover:shadow-2xl transform hover:-translate-y-1 w-full max-w-sm">
                 <i class="fas fa-file-upload text-xl sm:text-2xl"></i> 
@@ -258,15 +276,15 @@
                 <input type="file" accept=".pdf" class="hidden" id="welcome-file-upload">
             </label>
 
-            <div class="mt-6 sm:mt-8 p-4 sm:p-5 bg-white/60 backdrop-blur border border-slate-200 rounded-xl shadow-sm text-left w-full max-w-md">
+            <div class="mt-6 sm:mt-8 p-4 sm:p-5 bg-white/60 dark:bg-slate-800/60 backdrop-blur border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm text-left w-full max-w-md">
                 <div class="flex items-center gap-2 sm:gap-3 mb-2">
                     <i class="fas fa-shield-check text-amber-600 text-lg sm:text-xl"></i>
-                    <h3 class="font-bold text-slate-800 text-xs sm:text-sm uppercase tracking-wider">Hak Paten & Lisensi</h3>
+                    <h3 class="font-bold text-xs sm:text-sm uppercase tracking-wider">Hak Paten & Lisensi</h3>
                 </div>
-                <p class="text-[11px] sm:text-xs text-slate-600 leading-relaxed border-l-2 border-amber-400 pl-3 mb-3 sm:mb-4">
-                    <strong>RBA (Rumah Bahasa Arab) OmniReader Pro&trade;</strong> merupakan karya dan hak cipta <strong>M. Nur Muslim</strong>. Alat ini diwakafkan dan <strong>diizinkan untuk disebarluaskan secara bebas (gratis)</strong> kepada siapa saja demi kemaslahatan umat. Dilarang diperjualbelikan.
+                <p class="text-[11px] sm:text-xs opacity-80 leading-relaxed border-l-2 border-amber-400 pl-3 mb-3 sm:mb-4">
+                    <strong>RBA (Rumah Bahasa Arab) OmniReader Pro&trade;</strong> merupakan karya dan hak cipta <strong>M. Nur Muslim</strong>. Alat ini diwakafkan dan <strong>diizinkan untuk disebarluaskan secara bebas (gratis)</strong> demi kemaslahatan umat. Dilarang diperjualbelikan.
                 </p>
-                <button onclick="downloadLicense()" class="w-full bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 shadow-sm">
+                <button onclick="downloadLicense()" class="w-full bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 shadow-sm">
                     <i class="fas fa-file-signature text-base sm:text-lg"></i> Unduh Deklarasi Lisensi
                 </button>
             </div>
@@ -274,34 +292,47 @@
         
         <div id="loading-spinner-wrapper" class="hidden flex-col items-center justify-center h-full">
             <div class="spinner mb-6"></div>
-            <p class="text-slate-700 font-semibold text-base sm:text-lg animate-pulse" id="loading-text">Sedang memproses dokumen...</p>
+            <p class="font-semibold text-base sm:text-lg animate-pulse" id="loading-text">Sedang memproses dokumen...</p>
         </div>
     </div>
 
-    <!-- Antarmuka Utama Aplikasi -->
     <div class="main-container">
-        <header class="flex justify-between items-center bg-white p-3 sm:p-4 rounded-xl shadow-sm z-10 relative shrink-0">
+        <header class="flex justify-between items-center bg-white dark:bg-slate-800 p-3 sm:p-4 rounded-xl shadow-sm z-10 relative shrink-0 border border-slate-200 dark:border-slate-700 transition-colors">
             <div class="flex items-center gap-3 sm:gap-4 overflow-hidden">
                 <a href="https://ibb.co.com/0VXNWm8v" target="_blank" title="RBA Logo" class="shrink-0">
-                    <img src="https://i.ibb.co.com/tPhfNQkF/Chat-GPT-Image-Jul-31-2026-05-59-44-PM.png" alt="RBA Logo" class="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg shadow-sm border border-slate-100">
+                    <img src="https://i.ibb.co.com/tPhfNQkF/Chat-GPT-Image-Jul-31-2026-05-59-44-PM.png" alt="RBA Logo" class="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg shadow-sm border border-slate-100 dark:border-slate-700">
                 </a>
                 <div class="overflow-hidden">
-                    <h1 id="app-title" class="text-base sm:text-xl font-bold text-slate-800 truncate max-w-[150px] sm:max-w-md" style="font-family: 'Playfair Display', serif;">Belum ada dokumen</h1>
-                    <p class="text-[10px] sm:text-xs text-slate-500 font-semibold uppercase tracking-wider">RBA OmniReader Pro&trade;</p>
+                    <h1 id="app-title" class="text-base sm:text-xl font-bold truncate max-w-[140px] sm:max-w-xs" style="font-family: 'Playfair Display', serif;">Belum ada dokumen</h1>
+                    <p class="text-[10px] sm:text-xs opacity-60 font-semibold uppercase tracking-wider">RBA OmniReader Pro&trade;</p>
                 </div>
             </div>
-            <div class="flex gap-2 shrink-0">
-                <!-- Tombol Buka File Lain (Ikon Folder) -->
-                <button onclick="document.getElementById('welcome-file-upload').click()" class="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2 border border-emerald-200" title="Buka Dokumen Lain">
+            <div class="flex gap-1.5 sm:gap-2 shrink-0 items-center">
+                <!-- Tombol Buka File Lain -->
+                <button onclick="document.getElementById('welcome-file-upload').click()" class="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 px-2.5 sm:px-3 py-2 rounded-lg font-semibold transition flex items-center gap-1.5 border border-emerald-200 dark:border-emerald-800 text-xs sm:text-sm" title="Buka Dokumen Lain">
                     <i class="fas fa-folder-open"></i>
                     <span class="hidden md:inline">Buka File</span>
                 </button>
 
-                <button onclick="toggleEditMode()" class="bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2 border border-blue-200" id="btn-edit-mode" title="Mode Coret/Anotasi">
+                <!-- Tombol Pencarian Teks -->
+                <button onclick="toggleSearchModal(true)" class="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 px-2.5 sm:px-3 py-2 rounded-lg font-semibold transition flex items-center gap-1.5 border border-indigo-200 dark:border-indigo-800 text-xs sm:text-sm" title="Cari Teks dalam PDF">
+                    <i class="fas fa-search"></i>
+                    <span class="hidden md:inline">Cari Teks</span>
+                </button>
+
+                <!-- Tombol Dark Mode -->
+                <button onclick="toggleDarkMode()" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-amber-400 hover:bg-slate-200 px-2.5 sm:px-3 py-2 rounded-lg font-semibold transition flex items-center gap-1.5 border border-slate-200 dark:border-slate-600 text-xs sm:text-sm" id="btn-dark-mode" title="Mode Malam / Terang">
+                    <i class="fas fa-moon" id="dark-icon"></i>
+                </button>
+
+                <!-- Tombol Mode Anotasi -->
+                <button onclick="toggleEditMode()" class="bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 px-2.5 sm:px-3 py-2 rounded-lg font-semibold transition flex items-center gap-1.5 border border-blue-200 dark:border-blue-800 text-xs sm:text-sm" id="btn-edit-mode" title="Mode Coret/Anotasi">
                     <i class="fas fa-pen-nib"></i>
                     <span class="hidden md:inline">Anotasi</span>
                 </button>
-                <button onclick="toggleModal(true)" class="bg-amber-50 text-amber-700 hover:bg-amber-100 px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2 border border-amber-200">
+
+                <!-- Tombol Daftar Isi -->
+                <button onclick="toggleModal(true)" class="bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 hover:bg-amber-100 px-2.5 sm:px-3 py-2 rounded-lg font-semibold transition flex items-center gap-1.5 border border-amber-200 dark:border-amber-800 text-xs sm:text-sm" title="Daftar Isi">
                     <i class="fas fa-list-ul"></i>
                     <span class="hidden md:inline">Daftar Isi</span>
                 </button>
@@ -321,10 +352,12 @@
                 <i class="fas fa-chevron-left"></i> <span class="hidden sm:inline">Sebelumnya</span>
             </button>
             
-            <div class="flex items-center gap-2 sm:gap-3 bg-slate-50 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-semibold border border-slate-200 shadow-inner text-sm sm:text-base">
-                <span class="text-slate-600 hidden sm:inline">Hal</span>
-                <input type="number" id="page-input" class="w-12 sm:w-16 text-center border-2 border-slate-300 bg-white rounded-md p-1 text-slate-900 focus:outline-none focus:border-amber-500 transition-colors" value="1" min="1">
-                <span class="text-slate-600">/ <span id="total-pages">0</span></span>
+            <div class="flex items-center gap-2 sm:gap-3 bg-slate-50 dark:bg-slate-900 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-semibold border border-slate-200 dark:border-slate-700 shadow-inner text-sm sm:text-base">
+                <span class="opacity-75 hidden sm:inline">Hal</span>
+                <input type="number" id="page-input" class="w-12 sm:w-16 text-center border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-md p-1 focus:outline-none focus:border-amber-500 transition-colors" value="1" min="1">
+                <span class="opacity-75">/ <span id="total-pages">0</span></span>
+                <!-- Indikator Halaman Teranotasi -->
+                <span id="annotated-badge" class="hidden text-xs bg-amber-500 text-white font-bold px-1.5 py-0.5 rounded-full" title="Halaman ini sudah diberi coretan/catatan"><i class="fas fa-bookmark text-[10px]"></i></span>
             </div>
 
             <button id="next-btn" class="btn-control" onclick="goNext()">
@@ -332,20 +365,20 @@
             </button>
         </div>
 
-        <!-- Toolbar Edit (Tersembunyi secara default) -->
         <div class="edit-toolbar z-10 relative flex justify-center flex-wrap gap-2 mt-1 mb-1 hidden" id="edit-toolbar">
             <button onclick="setTool('pen')" class="btn-tool active-tool" id="tool-pen"><i class="fas fa-pen text-red-500"></i> Pena</button>
             <button onclick="setTool('highlight')" class="btn-tool" id="tool-highlight"><i class="fas fa-highlighter text-yellow-500"></i> Stabilo</button>
-            <button onclick="setTool('whiteout')" class="btn-tool" id="tool-whiteout"><i class="fas fa-paint-roller text-slate-400"></i> Tipe-X</button>
+            <button onclick="setTool('whiteout')" class="btn-tool" id="tool-whiteout"><i class="fas fa-paint-roller opacity-60"></i> Tipe-X</button>
             <button onclick="setTool('text')" class="btn-tool" id="tool-text"><i class="fas fa-font text-blue-600"></i> Teks</button>
             <button onclick="setTool('eraser')" class="btn-tool" id="tool-eraser" title="Hapus Coretan/Tipe-X/Teks"><i class="fas fa-eraser"></i> Hapus</button>
-            <div class="w-px h-6 sm:h-8 bg-slate-300 mx-1"></div>
-            <button onclick="undoCanvas()" class="btn-tool text-indigo-600 hover:bg-indigo-50 border-indigo-200" title="Urungkan (Undo)"><i class="fas fa-undo"></i> Undo</button>
+            <div class="w-px h-6 sm:h-8 bg-slate-300 dark:bg-slate-700 mx-1"></div>
+            <button onclick="undoCanvas()" class="btn-tool text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800" title="Urungkan (Undo)"><i class="fas fa-undo"></i> Undo</button>
+            <button onclick="redoCanvas()" class="btn-tool text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-950/40 border-cyan-200 dark:border-cyan-800" title="Ulangi (Redo)"><i class="fas fa-redo"></i> Redo</button>
             <button onclick="clearCanvas()" class="btn-tool hover:text-red-600"><i class="fas fa-trash"></i> Bersihkan</button>
             <button onclick="exportEditedPdf()" class="btn-tool bg-amber-600 text-white font-bold border-amber-700 hover:bg-amber-700 shadow-md"><i class="fas fa-file-export"></i> Simpan PDF</button>
         </div>
 
-        <div class="text-center mt-1 pb-1 text-[9px] sm:text-[10px] text-slate-400 font-medium tracking-wide shrink-0">
+        <div class="text-center mt-1 pb-1 text-[9px] sm:text-[10px] opacity-60 font-medium tracking-wide shrink-0">
             &copy; 2026 RBA (Rumah Bahasa Arab) OmniReader Pro&trade; oleh M. Nur Muslim
         </div>
     </div>
@@ -353,19 +386,45 @@
     <!-- Modal Daftar Isi Dinamis -->
     <div class="modal" id="toc-modal">
         <div class="modal-content">
-            <div class="flex justify-between items-center mb-4 border-b pb-4 border-slate-100 shrink-0">
+            <div class="flex justify-between items-center mb-4 border-b pb-4 border-slate-100 dark:border-slate-700 shrink-0">
                 <div class="flex items-center gap-3">
                     <i class="fas fa-bookmark text-amber-600 text-xl sm:text-2xl"></i>
-                    <h2 class="text-xl sm:text-2xl font-bold text-slate-800" style="font-family: 'Playfair Display', serif;">Daftar Isi</h2>
+                    <h2 class="text-xl sm:text-2xl font-bold" style="font-family: 'Playfair Display', serif;">Daftar Isi</h2>
                 </div>
-                <button onclick="toggleModal(false)" class="text-slate-400 hover:text-red-500 transition-colors text-lg sm:text-xl bg-slate-50 hover:bg-red-50 rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center">
+                <button onclick="toggleModal(false)" class="opacity-60 hover:text-red-500 transition-colors text-lg sm:text-xl bg-slate-100 dark:bg-slate-700 rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div id="toc-container" class="toc-list">
-                <div class="p-8 text-center text-slate-400">
+                <div class="p-8 text-center opacity-60">
                     <i class="fas fa-file-pdf text-3xl sm:text-4xl mb-4 opacity-50 block"></i>
                     Silakan unggah dokumen PDF terlebih dahulu.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Pencarian Teks -->
+    <div class="modal" id="search-modal">
+        <div class="modal-content" style="height: 70vh;">
+            <div class="flex justify-between items-center mb-4 border-b pb-4 border-slate-100 dark:border-slate-700 shrink-0">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-search text-indigo-600 text-xl sm:text-2xl"></i>
+                    <h2 class="text-xl sm:text-2xl font-bold" style="font-family: 'Playfair Display', serif;">Cari Kata dalam PDF</h2>
+                </div>
+                <button onclick="toggleSearchModal(false)" class="opacity-60 hover:text-red-500 transition-colors text-lg sm:text-xl bg-slate-100 dark:bg-slate-700 rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="flex gap-2 mb-4 shrink-0">
+                <input type="text" id="search-query-input" placeholder="Ketik kata yang dicari..." class="flex-1 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
+                <button onclick="executeTextSearch()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2 rounded-lg text-sm transition flex items-center gap-2">
+                    <i class="fas fa-search"></i> Cari
+                </button>
+            </div>
+            <div id="search-results-container" class="toc-list">
+                <div class="p-6 text-center opacity-60 text-sm">
+                    Masukkan kata kunci untuk mencari di seluruh halaman dokumen.
                 </div>
             </div>
         </div>
@@ -386,13 +445,14 @@
         const canvasWrapper = document.getElementById('canvas-wrapper');
         const pageInput = document.getElementById('page-input');
         const totalPagesEl = document.getElementById('total-pages');
+        const annotatedBadge = document.getElementById('annotated-badge');
         
         const loadingScreen = document.getElementById('loading-screen');
         const loadingContent = document.getElementById('loading-content');
         const loadingSpinnerWrapper = document.getElementById('loading-spinner-wrapper');
         const loadingText = document.getElementById('loading-text');
 
-        // State Anotasi & Undo History
+        // State Anotasi, Undo & Redo History
         const drawCanvas = document.getElementById('drawing-canvas');
         const drawCtx = drawCanvas.getContext('2d');
         let isDrawingMode = false;
@@ -400,7 +460,20 @@
         let isCanvasDirty = false;
         let currentTool = 'pen';
         let pageDrawings = {}; 
-        let undoHistory = {}; // Menyimpan riwayat stack untuk undo per halaman
+        let undoHistory = {}; 
+        let redoHistory = {}; 
+
+        // --- SISTEM DARK MODE ---
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            const icon = document.getElementById('dark-icon');
+            if (isDark) {
+                icon.className = 'fas fa-sun';
+            } else {
+                icon.className = 'fas fa-moon';
+            }
+        }
 
         // --- SISTEM RENDER PDF FIT-TO-SCREEN ---
         function renderPage(num) {
@@ -454,6 +527,13 @@
                     }
                     isCanvasDirty = false;
 
+                    // Perbarui Indikator Halaman Teranotasi
+                    if (pageDrawings[num] && pageDrawings[num] !== '') {
+                        annotatedBadge.classList.remove('hidden');
+                    } else {
+                        annotatedBadge.classList.add('hidden');
+                    }
+
                     if (pageNumPending !== null) {
                         renderPage(pageNumPending);
                         pageNumPending = null;
@@ -503,7 +583,7 @@
         // --- SISTEM DAFTAR ISI ---
         async function buildDynamicTOC() {
             const container = document.getElementById('toc-container');
-            container.innerHTML = '<div class="text-center p-8 text-slate-500 animate-pulse"><i class="fas fa-search mb-2 text-2xl block"></i> Memindai daftar isi otomatis...</div>';
+            container.innerHTML = '<div class="text-center p-8 opacity-60 animate-pulse"><i class="fas fa-search mb-2 text-2xl block"></i> Memindai daftar isi otomatis...</div>';
 
             try {
                 const outline = await pdfDoc.getOutline();
@@ -511,10 +591,10 @@
 
                 if (!outline || outline.length === 0) {
                     container.innerHTML = `
-                        <div class="p-8 text-center text-slate-500">
+                        <div class="p-8 text-center opacity-70">
                             <i class="fas fa-info-circle text-3xl sm:text-4xl mb-4 opacity-50 block"></i>
-                            <p class="font-semibold text-base sm:text-lg text-slate-700">Tidak Ada Metadata Daftar Isi</p>
-                            <p class="text-xs sm:text-sm mt-2">Buku ini tidak menyimpan data struktur bab (Bookmarks). Silakan gunakan navigasi manual.</p>
+                            <p class="font-semibold text-base sm:text-lg">Tidak Ada Metadata Daftar Isi</p>
+                            <p class="text-xs sm:text-sm mt-2">Buku ini tidak menyimpan data struktur bab (Bookmarks). Silakan gunakan navigasi manual atau fitur Pencarian Teks.</p>
                         </div>
                     `;
                     return;
@@ -526,7 +606,7 @@
                     div.className = `toc-item ${isChapter ? 'toc-chapter' : ''}`;
                     if (!isChapter) {
                         div.style.marginLeft = `${level * 15}px`;
-                        div.style.borderLeft = "2px solid #e2e8f0";
+                        div.style.borderLeft = "2px solid var(--border-color)";
                     }
 
                     div.innerHTML = `<span class="truncate pr-2">${item.title}</span> <i class="fas fa-angle-right text-xs opacity-50"></i>`;
@@ -565,6 +645,62 @@
             }
         }
 
+        // --- SISTEM PENCARIAN TEKS DALAM PDF ---
+        function toggleSearchModal(show) {
+            const modal = document.getElementById('search-modal');
+            if (show) {
+                if (!pdfDoc) { alert("Silakan buka file PDF terlebih dahulu."); return; }
+                modal.classList.add('active');
+                document.getElementById('search-query-input').focus();
+            } else {
+                modal.classList.remove('active');
+            }
+        }
+
+        async function executeTextSearch() {
+            const query = document.getElementById('search-query-input').value.trim().toLowerCase();
+            const container = document.getElementById('search-results-container');
+            if (!query) return;
+
+            container.innerHTML = '<div class="p-6 text-center opacity-60 animate-pulse"><i class="fas fa-spinner fa-spin mr-2"></i> Memindai seluruh halaman dokumen...</div>';
+            let matchesFound = 0;
+            let resultsHtml = '';
+
+            try {
+                for (let i = 1; i <= pdfDoc.numPages; i++) {
+                    const page = await pdfDoc.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const fullText = textContent.items.map(item => item.str).join(' ');
+
+                    if (fullText.toLowerCase().includes(query)) {
+                        matchesFound++;
+                        resultsHtml += `
+                            <div class="toc-item" onclick="jumpToSearchResult(${i})">
+                                <div>
+                                    <span class="font-bold text-indigo-600 dark:text-indigo-400">Halaman ${i}</span>
+                                    <p class="text-xs opacity-75 truncate max-w-sm mt-1">Ditemukan kata kunci relevan...</p>
+                                </div>
+                                <i class="fas fa-arrow-right text-xs opacity-50"></i>
+                            </div>
+                        `;
+                    }
+                }
+
+                if (matchesFound === 0) {
+                    container.innerHTML = `<div class="p-6 text-center opacity-60 text-sm">Kata kunci "<strong>${query}</strong>" tidak ditemukan dalam dokumen ini.</div>`;
+                } else {
+                    container.innerHTML = `<div class="p-2 text-xs opacity-60 mb-2">Ditemukan pada ${matchesFound} halaman:</div>` + resultsHtml;
+                }
+            } catch (e) {
+                container.innerHTML = '<div class="p-6 text-center text-red-500 text-sm">Terjadi kesalahan saat memindai teks.</div>';
+            }
+        }
+
+        function jumpToSearchResult(pageNumTarget) {
+            toggleSearchModal(false);
+            changePage(pageNumTarget);
+        }
+
         // --- SISTEM UPLOAD PDF ---
         document.getElementById('welcome-file-upload').addEventListener('change', handleFileUpload);
         
@@ -599,6 +735,7 @@
                     pageNum = 1;
                     pageDrawings = {}; 
                     undoHistory = {};
+                    redoHistory = {};
                     
                     buildDynamicTOC();
                     renderPage(pageNum); 
@@ -621,9 +758,12 @@
         document.getElementById('toc-modal').addEventListener('click', (e) => {
             if (e.target === document.getElementById('toc-modal')) toggleModal(false);
         });
+        document.getElementById('search-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('search-modal')) toggleSearchModal(false);
+        });
 
         document.addEventListener('keydown', (e) => {
-            if (!pdfDoc || document.getElementById('toc-modal').classList.contains('active')) return;
+            if (!pdfDoc || document.getElementById('toc-modal').classList.contains('active') || document.getElementById('search-modal').classList.contains('active')) return;
             if (e.key === 'ArrowRight') goNext(); 
             else if (e.key === 'ArrowLeft') goPrev();
         });
@@ -641,23 +781,26 @@
             else if (touchEndX - touchStartX > 60) goPrev(); 
         }, {passive: true});
 
-        // --- SISTEM ANOTASI & UNDO ---
+        // --- SISTEM ANOTASI, UNDO & REDO ---
         function saveStateForUndo() {
             if (!pdfDoc) return;
             if (!undoHistory[pageNum]) {
                 undoHistory[pageNum] = [];
             }
-            // Simpan snapshot saat ini ke dalam riwayat undo
             const currentDataUrl = drawCanvas.toDataURL('image/png');
             undoHistory[pageNum].push(currentDataUrl);
-            // Batasi riwayat hingga 20 langkah terakhir agar memori tidak penuh
             if (undoHistory[pageNum].length > 20) {
                 undoHistory[pageNum].shift();
             }
+            redoHistory[pageNum] = [];
         }
 
         function undoCanvas() {
             if (!pdfDoc || !undoHistory[pageNum] || undoHistory[pageNum].length === 0) return;
+            
+            if (!redoHistory[pageNum]) redoHistory[pageNum] = [];
+            redoHistory[pageNum].push(drawCanvas.toDataURL('image/png'));
+
             const previousStateUrl = undoHistory[pageNum].pop();
             const img = new Image();
             img.onload = () => {
@@ -665,8 +808,37 @@
                 drawCtx.drawImage(img, 0, 0);
                 pageDrawings[pageNum] = previousStateUrl;
                 isCanvasDirty = true;
+                
+                if (previousStateUrl && previousStateUrl !== '') {
+                    annotatedBadge.classList.remove('hidden');
+                } else {
+                    annotatedBadge.classList.add('hidden');
+                }
             };
             img.src = previousStateUrl;
+        }
+
+        function redoCanvas() {
+            if (!pdfDoc || !redoHistory[pageNum] || redoHistory[pageNum].length === 0) return;
+            
+            if (!undoHistory[pageNum]) undoHistory[pageNum] = [];
+            undoHistory[pageNum].push(drawCanvas.toDataURL('image/png'));
+
+            const nextStateUrl = redoHistory[pageNum].pop();
+            const img = new Image();
+            img.onload = () => {
+                drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+                drawCtx.drawImage(img, 0, 0);
+                pageDrawings[pageNum] = nextStateUrl;
+                isCanvasDirty = true;
+
+                if (nextStateUrl && nextStateUrl !== '') {
+                    annotatedBadge.classList.remove('hidden');
+                } else {
+                    annotatedBadge.classList.add('hidden');
+                }
+            };
+            img.src = nextStateUrl;
         }
 
         function toggleEditMode() {
@@ -727,7 +899,6 @@
                 return; 
             }
             
-            // Simpan snapshot sebelum mulai coret
             saveStateForUndo();
 
             isDrawing = true;
@@ -748,7 +919,7 @@
                 drawCtx.lineJoin = 'round';
                 drawCtx.globalCompositeOperation = 'source-over';
             } else if (currentTool === 'whiteout') { 
-                drawCtx.strokeStyle = 'white'; 
+                drawCtx.strokeStyle = document.body.classList.contains('dark-mode') ? '#1e293b' : 'white'; 
                 drawCtx.lineWidth = Math.max(25, drawCanvas.width / 40);
                 drawCtx.lineCap = 'round';
                 drawCtx.lineJoin = 'round';
@@ -773,6 +944,7 @@
             if (!isDrawing) return;
             isDrawing = false;
             drawCtx.closePath();
+            saveCurrentDrawing();
         }
 
         drawCanvas.addEventListener('mousedown', startDrawing);
@@ -989,7 +1161,6 @@
 
         function finalizeText(text, x, y, fontFam, fontSz, color, scaleY, containerEl) {
             if (text && text.trim() !== '') {
-                // Simpan snapshot untuk undo sebelum teks dicetak permanen
                 saveStateForUndo();
 
                 const finalFontSize = parseFloat(fontSz) * scaleY;
@@ -1015,12 +1186,18 @@
             drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
             pageDrawings[pageNum] = null; 
             isCanvasDirty = false;
+            annotatedBadge.classList.add('hidden');
         }
 
         function saveCurrentDrawing() {
             if (isCanvasDirty && pdfDoc) {
                 pageDrawings[pageNum] = drawCanvas.toDataURL('image/png');
                 isCanvasDirty = false;
+                annotatedBadge.classList.remove('hidden');
+            } else if (pageDrawings[pageNum] && pageDrawings[pageNum] !== '') {
+                annotatedBadge.classList.remove('hidden');
+            } else {
+                annotatedBadge.classList.add('hidden');
             }
         }
 
