@@ -86,7 +86,7 @@
             transition: opacity 0.3s ease;
         }
 
-        #pdf-canvas, #drawing-canvas {
+        #pdf-canvas, #drawing-canvas, #active-canvas {
             display: block;
             width: 100%;
             height: 100%;
@@ -223,7 +223,6 @@
 </head>
 <body>
 
-    <!-- Layar Pemuatan -->
     <div id="loading-screen">
         <div id="loading-content" class="w-full max-w-lg px-4 py-8 flex flex-col items-center text-center">
             <a href="https://ibb.co.com/0VXNWm8v" target="_blank" class="mb-4 sm:mb-6 hover:scale-105 transition-transform duration-300 shrink-0">
@@ -231,7 +230,7 @@
             </a>
             <h1 class="text-3xl sm:text-4xl font-bold mb-1" style="font-family: 'Playfair Display', serif;">RBA OmniReader Pro&trade;</h1>
             <p class="text-xs sm:text-sm font-bold text-amber-600 tracking-widest uppercase mb-3 sm:mb-4">Master PDF Generator</p>
-            <p class="text-sm sm:text-base opacity-75 mb-6 leading-relaxed">Platform pembaca PDF interaktif. Dilengkapi fitur anotasi, Tipe-X, ketik teks, mode malam, pencarian kata, dan indikator coretan halaman!</p>
+            <p class="text-sm sm:text-base opacity-75 mb-6 leading-relaxed">Platform pembaca PDF interaktif. Dilengkapi fitur anotasi presisi tinggi, Tipe-X, ketik teks, mode malam, pencarian kata, dan undo/redo!</p>
             
             <label class="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-3 shadow-lg hover:shadow-2xl transform hover:-translate-y-1 w-full max-w-sm">
                 <i class="fas fa-file-upload text-xl sm:text-2xl"></i> 
@@ -258,7 +257,6 @@
         </div>
     </div>
 
-    <!-- Antarmuka Utama -->
     <div class="main-container">
         <header class="flex justify-between items-center bg-white dark:bg-slate-800 p-3 sm:p-4 rounded-xl shadow-sm z-10 relative shrink-0 border border-slate-200 dark:border-slate-700 transition-colors">
             <div class="flex items-center gap-3 sm:gap-4 overflow-hidden">
@@ -292,7 +290,10 @@
         <div class="reader-wrapper" id="reader-container">
             <div id="canvas-wrapper">
                 <canvas id="pdf-canvas"></canvas>
+                <!-- Canvas utama untuk menyimpan seluruh coretan permanen -->
                 <canvas id="drawing-canvas" class="absolute top-0 left-0" style="pointer-events: none; touch-action: none;"></canvas>
+                <!-- Canvas bayangan untuk goresan aktif (mencegah penumpukan opacity stabilo / tinta transparan murni) -->
+                <canvas id="active-canvas" class="absolute top-0 left-0" style="pointer-events: none; touch-action: none;"></canvas>
             </div>
         </div>
 
@@ -324,7 +325,6 @@
         </div>
     </div>
 
-    <!-- Modal Daftar Isi -->
     <div class="modal" id="toc-modal">
         <div class="modal-content">
             <div class="flex justify-between items-center mb-4 border-b pb-4 border-slate-100 dark:border-slate-700 shrink-0">
@@ -340,7 +340,6 @@
         </div>
     </div>
 
-    <!-- Modal Pencarian Teks -->
     <div class="modal" id="search-modal">
         <div class="modal-content" style="height: 70vh;">
             <div class="flex justify-between items-center mb-4 border-b pb-4 border-slate-100 dark:border-slate-700 shrink-0">
@@ -368,6 +367,7 @@
         let pageNum = 1;
         let pageIsRendering = false;
         let pageNumPending = null;
+        let currentViewport = null; // Menyimpan viewport untuk kalkulasi koordinat presisi
         
         const canvas = document.getElementById('pdf-canvas');
         const ctx = canvas.getContext('2d');
@@ -381,8 +381,14 @@
         const loadingSpinnerWrapper = document.getElementById('loading-spinner-wrapper');
         const loadingText = document.getElementById('loading-text');
 
+        // Main drawing canvas
         const drawCanvas = document.getElementById('drawing-canvas');
         const drawCtx = drawCanvas.getContext('2d');
+        
+        // Active stroke canvas (mencegah tumpukan stabilo / pure ink system)
+        const activeCanvas = document.getElementById('active-canvas');
+        const activeCtx = activeCanvas.getContext('2d');
+
         let isDrawingMode = false;
         let isDrawing = false;
         let isCanvasDirty = false;
@@ -390,6 +396,7 @@
         let pageDrawings = {}; 
         let undoHistory = {}; 
         let redoHistory = {}; 
+        let currentPath = []; // Array untuk menyimpan titik koordinat goresan aktif
 
         function toggleDarkMode() {
             document.body.classList.toggle('dark-mode');
@@ -416,6 +423,7 @@
                 const pixelRatio = window.devicePixelRatio || 1;
                 const highResScale = fitScale * pixelRatio * 1.5;
                 const viewport = page.getViewport({ scale: highResScale });
+                currentViewport = viewport; // Simpan untuk referensi saat ekspor
 
                 canvas.width = viewport.width;
                 canvas.height = viewport.height;
@@ -435,9 +443,14 @@
                     pageIsRendering = false;
                     canvasWrapper.style.opacity = '1';
                     
+                    // Setup ukuran canvas coretan dan active canvas
                     drawCanvas.width = canvas.width;
                     drawCanvas.height = canvas.height;
+                    activeCanvas.width = canvas.width;
+                    activeCanvas.height = canvas.height;
+                    
                     drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+                    activeCtx.clearRect(0, 0, activeCanvas.width, activeCanvas.height);
                     
                     if (pageDrawings[num]) {
                         const img = new Image();
@@ -705,13 +718,15 @@
                 btn.classList.add('bg-blue-600', 'text-white');
                 btn.classList.remove('bg-blue-50', 'text-blue-700');
                 toolbar.classList.remove('hidden');
-                drawCanvas.style.pointerEvents = 'auto'; 
+                drawCanvas.style.pointerEvents = 'auto';
+                activeCanvas.style.pointerEvents = 'auto'; // Mengaktifkan layer bayangan
                 setTool('pen');
             } else {
                 btn.classList.remove('bg-blue-600', 'text-white');
                 btn.classList.add('bg-blue-50', 'text-blue-700');
                 toolbar.classList.add('hidden');
-                drawCanvas.style.pointerEvents = 'none'; 
+                drawCanvas.style.pointerEvents = 'none';
+                activeCanvas.style.pointerEvents = 'none';
                 saveCurrentDrawing();
             }
         }
@@ -749,29 +764,37 @@
             
             saveStateForUndo();
             isDrawing = true;
-            isCanvasDirty = true;
-            drawCtx.beginPath();
-            drawCtx.moveTo(pos.x, pos.y);
-            
-            if (currentTool === 'pen') {
-                drawCtx.strokeStyle = '#dc2626'; 
-                drawCtx.lineWidth = Math.max(3, drawCanvas.width / 400); 
-                drawCtx.lineCap = 'round'; drawCtx.lineJoin = 'round';
-                drawCtx.globalCompositeOperation = 'source-over';
-            } else if (currentTool === 'highlight') {
-                drawCtx.strokeStyle = 'rgba(234, 179, 8, 0.4)'; 
-                drawCtx.lineWidth = Math.max(15, drawCanvas.width / 60);
-                drawCtx.lineCap = 'butt'; drawCtx.lineJoin = 'round';
-                drawCtx.globalCompositeOperation = 'source-over';
-            } else if (currentTool === 'whiteout') { 
-                drawCtx.strokeStyle = document.body.classList.contains('dark-mode') ? '#1e293b' : 'white'; 
-                drawCtx.lineWidth = Math.max(25, drawCanvas.width / 40);
-                drawCtx.lineCap = 'round'; drawCtx.lineJoin = 'round';
-                drawCtx.globalCompositeOperation = 'source-over';
-            } else if (currentTool === 'eraser') {
+            currentPath = [pos]; // Mulai simpan titik koordinat goresan
+
+            // Jika mode penghapus, eksekusi langsung di canvas utama
+            if (currentTool === 'eraser') {
                 drawCtx.lineWidth = Math.max(25, drawCanvas.width / 30);
-                drawCtx.lineCap = 'round'; drawCtx.lineJoin = 'round';
+                drawCtx.lineCap = 'round'; 
+                drawCtx.lineJoin = 'round';
                 drawCtx.globalCompositeOperation = 'destination-out'; 
+                drawCtx.beginPath();
+                drawCtx.moveTo(pos.x, pos.y);
+            } else {
+                // KUNCI STABILO MURNI: Konfigurasi Canvas Bayangan (Active Canvas)
+                activeCtx.lineCap = 'round'; 
+                activeCtx.lineJoin = 'round';
+                
+                if (currentTool === 'pen') {
+                    activeCtx.strokeStyle = '#dc2626'; 
+                    activeCtx.lineWidth = Math.max(3, drawCanvas.width / 400); 
+                    activeCtx.globalCompositeOperation = 'source-over';
+                } else if (currentTool === 'highlight') {
+                    // Warna stabilo di canvas bayangan di-set SOLID (1.0),
+                    // Opacity (0.4) baru akan diberikan saat menempel ke canvas utama.
+                    activeCtx.strokeStyle = 'rgb(234, 179, 8)'; 
+                    activeCtx.lineWidth = Math.max(15, drawCanvas.width / 60);
+                    activeCtx.lineCap = 'butt'; // Potongan tegas untuk stabilo
+                    activeCtx.globalCompositeOperation = 'source-over';
+                } else if (currentTool === 'whiteout') { 
+                    activeCtx.strokeStyle = document.body.classList.contains('dark-mode') ? '#1e293b' : 'white'; 
+                    activeCtx.lineWidth = Math.max(25, drawCanvas.width / 40);
+                    activeCtx.globalCompositeOperation = 'source-over';
+                }
             }
         }
 
@@ -779,25 +802,62 @@
             if (!isDrawing || !isDrawingMode || !pdfDoc) return;
             if (e.cancelable) e.preventDefault();
             const pos = getMousePos(e);
-            drawCtx.lineTo(pos.x, pos.y);
-            drawCtx.stroke();
+            
+            if (currentTool === 'eraser') {
+                drawCtx.lineTo(pos.x, pos.y);
+                drawCtx.stroke();
+            } else {
+                currentPath.push(pos);
+                // Bersihkan canvas bayangan lalu gambar ulang seluruh path dalam SATU tarikan.
+                // Mencegah masalah opacity menumpuk menjadi gelap saat digambar pelan-pelan.
+                activeCtx.clearRect(0, 0, activeCanvas.width, activeCanvas.height);
+                activeCtx.beginPath();
+                activeCtx.moveTo(currentPath[0].x, currentPath[0].y);
+                for (let i = 1; i < currentPath.length; i++) {
+                    activeCtx.lineTo(currentPath[i].x, currentPath[i].y);
+                }
+                activeCtx.stroke();
+            }
         }
 
         function stopDrawing(e) {
             if (!isDrawing) return;
             isDrawing = false;
-            drawCtx.closePath();
+            
+            if (currentTool === 'eraser') {
+                drawCtx.closePath();
+            } else {
+                // Pindahkan hasil dari kanvas bayangan ke kanvas utama
+                if (currentTool === 'highlight') {
+                    // Terapkan transparansi 0.4 HANYA SEKALIGUS saat ditempelkan ke kanvas utama
+                    drawCtx.globalAlpha = 0.4;
+                    drawCtx.globalCompositeOperation = 'multiply'; // Mode Multiply mencegah stabilo menutupi teks hitam
+                } else {
+                    drawCtx.globalAlpha = 1.0;
+                    drawCtx.globalCompositeOperation = 'source-over';
+                }
+                
+                drawCtx.drawImage(activeCanvas, 0, 0);
+                
+                // Reset pengaturan kembali normal
+                drawCtx.globalAlpha = 1.0;
+                drawCtx.globalCompositeOperation = 'source-over';
+                activeCtx.clearRect(0, 0, activeCanvas.width, activeCanvas.height);
+                currentPath = [];
+            }
+            
+            isCanvasDirty = true;
             saveCurrentDrawing();
         }
 
-        drawCanvas.addEventListener('mousedown', startDrawing);
-        drawCanvas.addEventListener('mousemove', drawLine);
-        drawCanvas.addEventListener('mouseup', stopDrawing);
-        drawCanvas.addEventListener('mouseout', stopDrawing);
-        drawCanvas.addEventListener('touchstart', startDrawing, {passive: false});
-        drawCanvas.addEventListener('touchmove', drawLine, {passive: false});
-        drawCanvas.addEventListener('touchend', stopDrawing);
-        drawCanvas.addEventListener('touchcancel', stopDrawing);
+        activeCanvas.addEventListener('mousedown', startDrawing);
+        activeCanvas.addEventListener('mousemove', drawLine);
+        activeCanvas.addEventListener('mouseup', stopDrawing);
+        activeCanvas.addEventListener('mouseout', stopDrawing);
+        activeCanvas.addEventListener('touchstart', startDrawing, {passive: false});
+        activeCanvas.addEventListener('touchmove', drawLine, {passive: false});
+        activeCanvas.addEventListener('touchend', stopDrawing);
+        activeCanvas.addEventListener('touchcancel', stopDrawing);
 
         function createTextInput(initialCanvasX, initialCanvasY, cssX, cssY) {
             const existing = document.getElementById('dynamic-text-input-container');
@@ -954,6 +1014,7 @@
             if(!pdfDoc) return;
             saveStateForUndo(); 
             drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+            activeCtx.clearRect(0, 0, activeCanvas.width, activeCanvas.height);
             pageDrawings[pageNum] = null; 
             isCanvasDirty = false;
             annotatedBadge.classList.add('hidden');
@@ -978,7 +1039,7 @@
             loadingScreen.style.display = 'flex';
             loadingContent.classList.add('hidden');
             loadingSpinnerWrapper.classList.remove('hidden');
-            loadingText.innerText = `Menyatukan coretan & merender PDF (Presisi Tinggi)...`;
+            loadingText.innerText = `Memproses PDF dengan Presisi Koordinat Absolut...`;
             
             try {
                 const { PDFDocument } = PDFLib;
@@ -990,17 +1051,26 @@
                         const img = await pdfDocToSave.embedPng(pageDrawings[i]);
                         const page = pages[i - 1];
                         
-                        // KUNCI PRESISI TINGKAT TINGGI:
-                        // Kita tidak lagi menggunakan x:0, y:0.
-                        // Menggunakan getCropBox() memastikan koordinat membaca margin tersembunyi
-                        // dari dokumen asli, sehingga coretan tidak akan bergeser turun atau naik.
-                        const cropBox = page.getCropBox();
+                        // KUNCI PRESISI TINGKAT TINGGI (ABSOLUTE COORDINATE MAPPING)
+                        // Kita tidak lagi menembak koordinat dari (0,0) karena banyak PDF 
+                        // memiliki CropBox/MediaBox Offset (margin tersembunyi yang digeser oleh Microsoft Word/Scanner).
                         
+                        // 1. Ambil kotak pemotongan aktual dari halaman PDF
+                        const cropBox = page.getCropBox(); 
+                        
+                        // 2. Ambil ukuran visual aktual yang dirender oleh pdf.js di layar
+                        // (currentViewport disimpan saat renderPage dieksekusi)
+                        const visualWidth = currentViewport ? currentViewport.viewBox[2] : cropBox.width;
+                        const visualHeight = currentViewport ? currentViewport.viewBox[3] : cropBox.height;
+
+                        // 3. Terapkan koordinat dengan memperhitungkan offset margin tersembunyi
+                        // x = cropBox.x (titik mulai asli kertas)
+                        // y = cropBox.y (titik mulai asli kertas)
                         page.drawImage(img, {
                             x: cropBox.x,
                             y: cropBox.y,
-                            width: cropBox.width,
-                            height: cropBox.height
+                            width: visualWidth,
+                            height: visualHeight
                         });
                     }
                 }
