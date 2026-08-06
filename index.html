@@ -441,7 +441,7 @@
                     
                     if (pageDrawings[num]) {
                         const img = new Image();
-                        img.onload = () => { drawCtx.drawImage(img, 0, 0); };
+                        img.onload = () => { drawCtx.drawImage(img, 0, 0, drawCanvas.width, drawCanvas.height); };
                         img.src = pageDrawings[num];
                     }
                     isCanvasDirty = false;
@@ -668,7 +668,7 @@
             const img = new Image();
             img.onload = () => {
                 drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
-                drawCtx.drawImage(img, 0, 0);
+                drawCtx.drawImage(img, 0, 0, drawCanvas.width, drawCanvas.height);
                 pageDrawings[pageNum] = previousStateUrl;
                 isCanvasDirty = true;
                 if (previousStateUrl && previousStateUrl !== '') { annotatedBadge.classList.remove('hidden'); } 
@@ -686,7 +686,7 @@
             const img = new Image();
             img.onload = () => {
                 drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
-                drawCtx.drawImage(img, 0, 0);
+                drawCtx.drawImage(img, 0, 0, drawCanvas.width, drawCanvas.height);
                 pageDrawings[pageNum] = nextStateUrl;
                 isCanvasDirty = true;
                 if (nextStateUrl && nextStateUrl !== '') { annotatedBadge.classList.remove('hidden'); } 
@@ -990,13 +990,17 @@
                         const img = await pdfDocToSave.embedPng(pageDrawings[i]);
                         const page = pages[i - 1];
                         
-                        // Kunci Presisi: Gambar kanvas disesuaikan paksa dengan dimensi asli halaman PDF
-                        const { width, height } = page.getSize();
+                        // KUNCI PRESISI TINGKAT TINGGI:
+                        // Kita tidak lagi menggunakan x:0, y:0.
+                        // Menggunakan getCropBox() memastikan koordinat membaca margin tersembunyi
+                        // dari dokumen asli, sehingga coretan tidak akan bergeser turun atau naik.
+                        const cropBox = page.getCropBox();
+                        
                         page.drawImage(img, {
-                            x: 0,
-                            y: 0,
-                            width: width,  
-                            height: height
+                            x: cropBox.x,
+                            y: cropBox.y,
+                            width: cropBox.width,
+                            height: cropBox.height
                         });
                     }
                 }
