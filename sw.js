@@ -1,7 +1,8 @@
-const CACHE_NAME = 'rba-omnireader-pwa-v11';
+const CACHE_NAME = 'rba-omnireader-pwa-v12';
 const urlsToCache = [
-  './index.html',
-  './manifest.json'
+  '/rba-omnireader/',
+  '/rba-omnireader/index.html',
+  '/rba-omnireader/manifest.json'
 ];
 
 self.addEventListener('install', event => {
