@@ -2,7 +2,7 @@
   "name": "RBA OmniReader Pro V11",
   "short_name": "OmniReader",
   "description": "Master PDF Generator & Universal Reader",
-  "start_url": "./index.html",
+  "start_url": "/rba-omnireader/index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
@@ -10,12 +10,14 @@
     {
       "src": "https://i.ibb.co.com/20t7Rfxq/ENSIKLOPEDIA-23.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "https://i.ibb.co.com/20t7Rfxq/ENSIKLOPEDIA-23.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
