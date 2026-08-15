@@ -31,6 +31,7 @@
             --text-color: #f3f4f6;
             --panel-bg: #1f2937;
             --border-color: #374151;
+            /* Memberikan efek sepia/redup pada kertas PDF agar tidak silau */
             --canvas-filter: brightness(0.85) sepia(0.1) contrast(0.9);
         }
 
@@ -61,12 +62,12 @@
     <!-- HEADER / NAVBAR -->
     <header class="panel-container border-b shadow-sm p-3 flex justify-between items-center z-10">
         <div class="flex items-center space-x-3 sm:space-x-4">
-            <!-- LOGO -->
+            <!-- LOGO BARU YANG RESPONSIF DENGAN LINK AKTIF -->
             <a href="https://ibb.co.com/6cPRGfzY" target="_blank" rel="noopener noreferrer">
                 <img src="https://i.ibb.co.com/20t7Rfxq/ENSIKLOPEDIA-23.png" alt="ENSIKLOPEDIA (23)" border="0" class="max-h-12 sm:max-h-16 w-auto object-contain transition-all duration-300 hover:scale-105">
             </a>
             
-            <!-- JUDUL WARNA WARNI PRESISI (YANG SUDAH BERHASIL) -->
+            <!-- JUDUL WARNA WARNI PRESISI SESUAI GAMBAR IMAGE_E9EE1A.PNG -->
             <div>
                 <h1 class="text-xl sm:text-2xl md:text-4xl font-extrabold" style="font-family: 'Segoe UI', Arial, sans-serif; text-shadow: 0px 1px 1px rgba(0,0,0,0.05);">
                     <span style="color: #3260e8;">RBA</span> 
@@ -96,6 +97,8 @@
 
     <!-- MAIN WORKSPACE -->
     <main class="flex-1 flex overflow-hidden relative">
+        
+        <!-- SIDEBAR (DAFTAR ISI & INDIKATOR CORETAN) -->
         <aside class="panel-container w-64 border-r flex flex-col h-full hidden md:flex z-10 transition-colors">
             <div class="p-4 border-b border-gray-200 dark:border-gray-700">
                 <h2 class="font-bold text-lg"><i class="fas fa-list mr-2"></i> Daftar Isi</h2>
@@ -103,6 +106,8 @@
             <div class="flex-1 overflow-y-auto p-4 space-y-2 arabic-text" id="toc-container">
                 <p class="text-sm text-gray-500 italic">Memuat struktur dokumen...</p>
             </div>
+            
+            <!-- PANEL INDIKATOR HALAMAN TERANOTASI -->
             <div class="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
                 <h3 class="font-semibold text-sm mb-2"><i class="fas fa-edit mr-1 text-amber-500"></i> Halaman Bercoretan:</h3>
                 <div id="annotated-pages-list" class="flex flex-wrap gap-1">
@@ -113,27 +118,46 @@
 
         <!-- KANVAS PDF UTAMA -->
         <div class="flex-1 overflow-auto bg-gray-200 dark:bg-gray-900 relative flex justify-center p-2 sm:p-4" id="canvas-wrapper">
+            <!-- Canvas dibungkus agar presisi mutlak -->
             <canvas id="pdf-render" class="shadow-xl bg-white max-w-full h-auto"></canvas>
         </div>
 
-        <!-- FLOATING TOOLBAR -->
+        <!-- FLOATING TOOLBAR (ALAT CORET, STABILO, TIPE-X, TEKS, PALET WARNA) -->
         <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 panel-container shadow-2xl rounded-full px-4 sm:px-6 py-2 sm:py-3 flex space-x-2 sm:space-x-4 items-center border">
-            <button id="tool-pen" class="tool-btn text-blue-600 hover:text-blue-800 p-2 text-lg sm:text-xl rounded-full"><i class="fas fa-pen"></i></button>
-            <button id="tool-highlighter" class="tool-btn text-yellow-400 hover:text-yellow-600 p-2 text-lg sm:text-xl rounded-full"><i class="fas fa-highlighter"></i></button>
-            <button id="tool-whiteout" class="tool-btn text-gray-400 hover:text-gray-600 p-2 text-lg sm:text-xl rounded-full"><i class="fas fa-paint-brush"></i></button>
-            <button id="tool-text" class="tool-btn text-gray-600 dark:text-gray-300 hover:text-gray-800 p-2 text-lg sm:text-xl rounded-full"><i class="fas fa-font"></i></button>
+            <button id="tool-pen" class="tool-btn text-blue-600 hover:text-blue-800 p-2 text-lg sm:text-xl rounded-full" title="Pena">
+                <i class="fas fa-pen"></i>
+            </button>
+            <button id="tool-highlighter" class="tool-btn text-yellow-400 hover:text-yellow-600 p-2 text-lg sm:text-xl rounded-full" title="Stabilo">
+                <i class="fas fa-highlighter"></i>
+            </button>
+            <button id="tool-whiteout" class="tool-btn text-gray-400 hover:text-gray-600 p-2 text-lg sm:text-xl rounded-full" title="Tipe-X (Hapus Permanen)">
+                <i class="fas fa-paint-brush"></i>
+            </button>
+            <button id="tool-text" class="tool-btn text-gray-600 dark:text-gray-300 hover:text-gray-800 p-2 text-lg sm:text-xl rounded-full" title="Sisipkan Teks">
+                <i class="fas fa-font"></i>
+            </button>
+            
             <div class="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1 sm:mx-2"></div>
-            <label for="color-picker" class="cursor-pointer p-2 text-lg sm:text-xl hover:scale-110 transition-transform">
+            
+            <!-- TOMBOL PALET JUTAAN WARNA -->
+            <label for="color-picker" class="cursor-pointer p-2 text-lg sm:text-xl hover:scale-110 transition-transform" title="Pilih Warna">
                 <i class="fas fa-palette" style="background: -webkit-linear-gradient(45deg, red, blue, green, yellow); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
             </label>
             <input type="color" id="color-picker" class="hidden" value="#000000">
+
             <div class="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1 sm:mx-2"></div>
-            <button id="tool-undo" class="text-gray-500 hover:text-gray-800 p-2 text-lg sm:text-xl rounded-full"><i class="fas fa-undo"></i></button>
-            <button id="tool-redo" class="text-gray-500 hover:text-gray-800 p-2 text-lg sm:text-xl rounded-full"><i class="fas fa-redo"></i></button>
+            
+            <!-- UNDO / REDO -->
+            <button id="tool-undo" class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 p-2 text-lg sm:text-xl rounded-full" title="Undo">
+                <i class="fas fa-undo"></i>
+            </button>
+            <button id="tool-redo" class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 p-2 text-lg sm:text-xl rounded-full" title="Redo">
+                <i class="fas fa-redo"></i>
+            </button>
         </div>
     </main>
 
-    <!-- SCRIPT MESIN PRESISI -->
+    <!-- SCRIPT MESIN PRESISI (DIKUNCI) -->
     <script>
         // SCRIPT REGISTRASI PWA / SERVICE WORKER
         if ('serviceWorker' in navigator) {
@@ -161,17 +185,28 @@ Fungsi    : Master PDF Generator & Universal Reader
 Pemilik   : M. Nur Muslim (Hak Cipta Dilindungi)
 
 1. STATUS KEPEMILIKAN & WAKAF
-Perangkat lunak ini resmi DIWAKAFKAN untuk kemaslahatan umat.
+Perangkat lunak ini merupakan hak cipta dan karya intelektual 
+dari M. Nur Muslim. Mulai tanggal peluncurannya, alat ini resmi 
+DIWAKAFKAN untuk kemaslahatan umat, pendidikan, dan 
+pengembangan ilmu pengetahuan.
 
 2. HAK DISTRIBUSI TERBUKA (OPEN DISTRIBUTION)
-Kami memberikan hak penuh untuk:
-  a. Menggunakan aplikasi ini tanpa batas.
-  b. Menyebarluaskan secara BEBAS dan GRATIS.
+Kami memberikan hak dan izin penuh kepada siapa pun (individu, 
+komunitas, maupun lembaga/institusi) untuk:
+  a. Menggunakan aplikasi ini tanpa batas waktu.
+  b. Menyebarluaskan, menyalin, dan membagikan aplikasi ini 
+     secara BEBAS dan GRATIS kepada siapa saja.
 
 3. LARANGAN KERAS (RESTRICTIONS)
-SANGAT DILARANG KERAS untuk:
-  a. Memperjualbelikan aplikasi ini.
-  b. Menghapus nama pengembang (M. Nur Muslim).
+Demi menjaga niat tulus dari pewakafan ini, SANGAT DILARANG 
+KERAS untuk:
+  a. Memperjualbelikan aplikasi ini dalam bentuk dan dalih apapun.
+  b. Menghapus nama pengembang (M. Nur Muslim) atau mengklaim
+     hak cipta atas logo/sistem milik RBA OmniReader Pro™.
+
+Semoga alat ini membawa keberkahan, manfaat, dan kemudahan.
+
+Dideklarasikan pada: Agustus 2026
 
 Hormat kami,
 M. Nur Muslim
@@ -205,7 +240,7 @@ RBA - Rumah Bahasa Arab`;
             }
         });
 
-        console.log("RBA OmniReader Pro™ Engine V11 - PWA Ready.");
+        console.log("RBA OmniReader Pro™ Engine V11 - Initialization Complete. System Locked for Stability.");
     </script>
 </body>
 </html>
