@@ -6,7 +6,7 @@
     <title>RBA OmniReader Pro V11</title>
     
     <!-- KODE PWA (PENGHUBUNG INSTALASI) -->
-    <link rel="manifest" href="./manifest.json">
+    <link rel="manifest" href="/rba-omnireader/manifest.json">
     <meta name="theme-color" content="#ffffff">
     <link rel="apple-touch-icon" href="https://i.ibb.co.com/20t7Rfxq/ENSIKLOPEDIA-23.png">
     
@@ -250,7 +250,7 @@
         // SCRIPT REGISTRASI PWA / SERVICE WORKER
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
+                navigator.serviceWorker.register('rba-omnireader/sw.js')
                     .then(registration => {
                         console.log('PWA Service Worker berhasil didaftarkan!', registration);
                     })
