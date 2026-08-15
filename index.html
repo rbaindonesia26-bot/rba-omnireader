@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>RBA OmniReader Pro V11</title>
     
-    <!-- KODE PWA (PENGHUBUNG INSTALASI) -->
+    <!-- KODE PWA KHUSUS GITHUB PAGES -->
     <link rel="manifest" href="/rba-omnireader/manifest.json">
     <meta name="theme-color" content="#ffffff">
     <link rel="apple-touch-icon" href="https://i.ibb.co.com/20t7Rfxq/ENSIKLOPEDIA-23.png">
@@ -77,10 +77,9 @@
 
     <div id="welcome-screen" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center p-4 sm:p-6 overflow-y-auto">
         <a href="https://ibb.co.com/0VXNWm8v" target="_blank">
-            <img src="https://i.ibb.co.com/20t7Rfxq/ENSIKLOPEDIA-23.png" alt="Chat GPT Image Jul 31 2026 05 59 44 PM" border="0" class="h-36 w-auto mb-4 object-contain rounded-2xl drop-shadow-md">
+            <img src="https://i.ibb.co.com/20t7Rfxq/ENSIKLOPEDIA-23.png" alt="Logo Ensiklopedia" border="0" class="h-36 w-auto mb-4 object-contain rounded-2xl drop-shadow-md">
         </a>
         
-        <!-- JUDUL WARNA WARNI SOLID (SAMA SEPERTI GAMBAR BAPAK, TANPA GRADASI) -->
         <h1 class="text-3xl sm:text-4xl font-extrabold mb-2 tracking-tight text-center drop-shadow-sm pb-1" style="font-family: 'Segoe UI', Arial, sans-serif;">
             <span style="color: #3260e8;">RBA</span> 
             <span style="color: #6c46e3;">OmniReader</span> 
@@ -150,7 +149,6 @@
                     <button onclick="alert('Fitur pencarian teks dinonaktifkan sementara untuk menjaga stabilitas Scanner Resolusi Tinggi (Anti-Geser).')" class="w-9 h-9 rounded-lg text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 shadow-sm" title="Pencarian">
                         <i class="fas fa-search"></i>
                     </button>
-                    <!-- Tombol Mode Malam -->
                     <button onclick="toggleDarkMode()" id="dark-mode-btn" class="w-9 h-9 rounded-lg text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 shadow-sm" title="Mode Malam">
                         <i class="fas fa-moon" id="dark-mode-icon"></i>
                     </button>
@@ -247,10 +245,10 @@
     </div>
 
     <script>
-        // SCRIPT REGISTRASI PWA / SERVICE WORKER
+        // SCRIPT REGISTRASI PWA KHUSUS GITHUB PAGES
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('rba-omnireader/sw.js')
+                navigator.serviceWorker.register('/rba-omnireader/sw.js')
                     .then(registration => {
                         console.log('PWA Service Worker berhasil didaftarkan!', registration);
                     })
@@ -279,13 +277,13 @@
         let currentColor = '#ef4444';
         const toolSettings = {
             pen: { size: 2 },
-            highlight: { size: 24, alpha: 0.4 }, // Ukuran stabilo dan transparansi murni
+            highlight: { size: 24, alpha: 0.4 }, 
             whiteout: { size: 15, color: '#ffffff' },
             eraser: { size: 20 }
         };
 
         let isDrawing = false;
-        let currentPath = []; // Algoritma Jalur Tunggal
+        let currentPath = []; 
 
         const canvasWrapper = document.getElementById('canvas-wrapper');
         const pdfCanvas = document.getElementById('pdf-canvas');
@@ -532,7 +530,7 @@
             });
             const activeBtn = document.getElementById('tool-' + tool);
             activeBtn.classList.remove('text-slate-500');
-            // Menyesuaikan class aktif untuk mode terang dan malam
+            
             if (isDarkTheme) {
                 activeBtn.classList.add('bg-slate-700', 'text-blue-400', 'active-tool');
             } else {
@@ -614,7 +612,7 @@
             if (currentTool === 'text') {
                 const text = prompt("Masukkan teks untuk ditambahkan ke dokumen:");
                 if (text) {
-                    drawCtx.font = "bold 32px 'Inter', Arial"; // Menggunakan ukuran besar agar tidak pecah saat di-zoom
+                    drawCtx.font = "bold 32px 'Inter', Arial"; 
                     drawCtx.fillStyle = currentColor;
                     drawCtx.fillText(text, pos.x, pos.y);
                     saveCurrentDrawing();
@@ -624,9 +622,8 @@
             }
 
             isDrawing = true;
-            currentPath = [pos]; // Mulai merekam titik kordinat
+            currentPath = [pos]; 
 
-            // Jika penghapus, langsung gambar ke kanvas utama
             if (currentTool === 'eraser') {
                 drawCtx.globalCompositeOperation = 'destination-out';
                 drawCtx.lineWidth = toolSettings.eraser.size;
@@ -649,7 +646,6 @@
                 drawCtx.lineTo(pos.x, pos.y);
                 drawCtx.stroke();
             } else {
-                // Algoritma Jalur Tunggal: Menggambar ulang seluruh lintasan dalam 1 kedipan untuk stabilo murni
                 currentPath.push(pos);
                 activeCtx.clearRect(0, 0, activeCanvas.width, activeCanvas.height);
                 
@@ -660,9 +656,8 @@
                 }
                 
                 if (currentTool === 'highlight') {
-                    activeCtx.globalAlpha = toolSettings.highlight.alpha; // Transparansi Murni
+                    activeCtx.globalAlpha = toolSettings.highlight.alpha; 
                     activeCtx.lineWidth = toolSettings.highlight.size;
-                    // Mode kalikan warna seperti Ms Word
                     activeCtx.globalCompositeOperation = 'multiply'; 
                     activeCtx.strokeStyle = currentColor;
                 } else if (currentTool === 'whiteout') {
@@ -688,7 +683,6 @@
             if (currentTool !== 'eraser') {
                 drawCtx.globalCompositeOperation = 'source-over';
                 drawCtx.globalAlpha = 1.0; 
-                // Pindahkan hasil akhir (jalur tunggal) ke kanvas permanen
                 drawCtx.drawImage(activeCanvas, 0, 0);
                 activeCtx.clearRect(0, 0, activeCanvas.width, activeCanvas.height);
             } else {
@@ -717,7 +711,6 @@
                 icon.classList.replace('fa-moon', 'fa-sun');
                 icon.classList.add('text-amber-400');
                 btn.title = "Mode Terang";
-                // Perbarui warna alat jika sedang aktif
                 document.querySelectorAll('.active-tool').forEach(el => {
                     el.classList.replace('bg-slate-200', 'bg-slate-700');
                     el.classList.replace('text-blue-600', 'text-blue-400');
@@ -727,7 +720,6 @@
                 icon.classList.replace('fa-sun', 'fa-moon');
                 icon.classList.remove('text-amber-400');
                 btn.title = "Mode Malam";
-                // Perbarui warna alat kembali terang
                 document.querySelectorAll('.active-tool').forEach(el => {
                     el.classList.replace('bg-slate-700', 'bg-slate-200');
                     el.classList.replace('text-blue-400', 'text-blue-600');
