@@ -174,7 +174,8 @@
                 <button onclick="setTool('pan')" id="tool-pan" class="tool-btn w-10 h-10 rounded-lg text-slate-500 hover:bg-slate-100 shrink-0" title="Geser / Baca (Aman dari Coretan)"><i class="fas fa-hand-paper"></i></button>
                 <button onclick="setTool('pen')" id="tool-pen" class="tool-btn active-tool w-10 h-10 rounded-lg text-slate-500 hover:bg-slate-100 shrink-0" title="Pena"><i class="fas fa-pen"></i></button>
                 <button onclick="setTool('highlight')" id="tool-highlight" class="tool-btn w-10 h-10 rounded-lg text-slate-500 hover:bg-slate-100 shrink-0" title="Stabilo Transparan"><i class="fas fa-highlighter"></i></button>
-                <button onclick="setTool('whiteout')" id="tool-whiteout" class="tool-btn w-10 h-10 rounded-lg text-slate-500 hover:bg-slate-100 shrink-0" title="Tipe-X (Hapus Tulisan Asli)"><i class="fas fa-paint-brush"></i></button>
+                <!-- KETERANGAN TOMBOL TIPE-X DIUBAH -->
+                <button onclick="setTool('whiteout')" id="tool-whiteout" class="tool-btn w-10 h-10 rounded-lg text-slate-500 hover:bg-slate-100 shrink-0" title="Tipe-X (Bunglon - Ikuti Warna Palet)"><i class="fas fa-paint-brush"></i></button>
                 <button onclick="setTool('text')" id="tool-text" class="tool-btn w-10 h-10 rounded-lg text-slate-500 hover:bg-slate-100 shrink-0" title="Ketik Teks"><i class="fas fa-font"></i></button>
                 <button onclick="setTool('eraser')" id="tool-eraser" class="tool-btn w-10 h-10 rounded-lg text-slate-500 hover:bg-slate-100 shrink-0" title="Penghapus Coretan"><i class="fas fa-eraser"></i></button>
                 
@@ -182,7 +183,7 @@
                     <button onclick="setColor('#ef4444')" class="w-8 h-8 rounded-md bg-[#ef4444] shadow-sm border border-transparent hover:border-white ring-2 ring-transparent focus:ring-slate-300"></button>
                     <button onclick="setColor('#3b82f6')" class="w-8 h-8 rounded-md bg-[#3b82f6] shadow-sm border border-transparent hover:border-white ring-2 ring-transparent focus:ring-slate-300"></button>
                     <button onclick="setColor('#10b981')" class="w-8 h-8 rounded-md bg-[#10b981] shadow-sm border border-transparent hover:border-white ring-2 ring-transparent focus:ring-slate-300"></button>
-                    <button onclick="setColor('#222222')" class="w-8 h-8 rounded-md bg-[#222222] shadow-sm border border-transparent hover:border-white ring-2 ring-transparent focus:ring-slate-300"></button>
+                    <button onclick="setColor('#ffffff')" class="w-8 h-8 rounded-md bg-[#ffffff] shadow-sm border border-slate-300 hover:border-slate-400 ring-2 ring-transparent focus:ring-slate-300" title="Putih Bersih"></button>
                     <button onclick="setColor('#fcd34d')" class="w-8 h-8 rounded-md bg-[#fcd34d] shadow-sm border border-transparent hover:border-white ring-2 ring-transparent focus:ring-slate-300 relative" title="Kuning Stabilo">
                         <i class="fas fa-star text-[10px] text-amber-700 absolute inset-0 m-auto" style="width: 10px; height: 10px;"></i>
                     </button>
@@ -275,10 +276,12 @@
 
         let currentTool = 'pen';
         let currentColor = '#ef4444';
+        
+        // KODE TIPE-X DIPERBARUI: Warna dihapus dari default, ukuran tetap diatur
         const toolSettings = {
             pen: { size: 2 },
             highlight: { size: 24, alpha: 0.4 }, 
-            whiteout: { size: 15, color: '#ffffff' },
+            whiteout: { size: 15 }, 
             eraser: { size: 20 }
         };
 
@@ -541,7 +544,13 @@
             else document.body.classList.remove('pan-mode');
         }
 
-        function setColor(color) { currentColor = color; if(currentTool !== 'highlight' && currentTool !== 'whiteout') setTool('pen'); }
+        function setColor(color) { 
+            currentColor = color; 
+            // Ubah logika: Jangan otomatis pindah ke pena jika sedang memakai Tipe-X
+            if(currentTool !== 'highlight' && currentTool !== 'whiteout') {
+                setTool('pen'); 
+            }
+        }
 
         function saveCurrentDrawing() {
             pageDrawings[pageNum] = drawCanvas.toDataURL('image/png');
@@ -661,10 +670,11 @@
                     activeCtx.globalCompositeOperation = 'multiply'; 
                     activeCtx.strokeStyle = currentColor;
                 } else if (currentTool === 'whiteout') {
+                    // KODE TIPE-X BUNGLON DIMASUKKAN DI SINI
                     activeCtx.globalAlpha = 1.0;
                     activeCtx.globalCompositeOperation = 'source-over';
                     activeCtx.lineWidth = toolSettings.whiteout.size;
-                    activeCtx.strokeStyle = toolSettings.whiteout.color;
+                    activeCtx.strokeStyle = currentColor; // Menyerap warna yang sedang aktif
                 } else {
                     activeCtx.globalAlpha = 1.0;
                     activeCtx.globalCompositeOperation = 'source-over';
